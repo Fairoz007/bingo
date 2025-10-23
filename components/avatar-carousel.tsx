@@ -5,10 +5,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const AVATAR_OPTIONS = [
-  "👤",
+  "🎮",
   "😀",
   "😎",
-  "🎮",
   "🎯",
   "🎲",
   "🎪",
@@ -17,6 +16,7 @@ const AVATAR_OPTIONS = [
   "🎸",
   "🐱",
   "🐶",
+  "👤",
   "🐼",
   "🐵",
   "🦄",
@@ -37,7 +37,7 @@ interface AvatarCarouselProps {
 
 export function AvatarCarousel({ value, onChange }: AvatarCarouselProps) {
   const [startIndex, setStartIndex] = useState(0)
-  const visibleCount = 5
+  const visibleCount = 6
 
   const handlePrev = () => {
     setStartIndex((prev) => (prev === 0 ? Math.max(0, AVATAR_OPTIONS.length - visibleCount) : prev - 1))
@@ -67,7 +67,7 @@ export function AvatarCarousel({ value, onChange }: AvatarCarouselProps) {
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex flex-1 gap-2 justify-center flex-wrap sm:flex-nowrap sm:overflow-visible">
+        <div className="grid grid-cols-3 gap-2 justify-items-center flex-1 max-w-[240px] mx-auto sm:max-w-[260px] md:max-w-none md:grid-cols-6 md:justify-items-center">
           {visibleAvatars.map((avatar) => (
             <button
               key={avatar}
