@@ -1,0 +1,268 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import type { GameState, Room, Player } from "@/lib/types"
+import { BingoBoard } from "@/components/bingo-board"
+import { GameHeader } from "@/components/game-header"
+import { WaitingScreen } from "@/components/waiting-screen"
+import { WinModal } from "@/components/win-modal"
+import { BoardConfiguration } from "@/components/board-configuration"
+import { Card } from "@/components/ui/card"
+
+interface GameRoomClientProps {
+  initialRoom: Room
+  initialPlayers: Player[]
+  roomCode: string
+  currentPlayer: string
+}
+
+export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentPlayer }: GameRoomClientProps) {
+  const [gameState, setGameState] = useState<GameState>({
+    room: initialRoom,
+    players: initialPlayers,
+  })
+  const [boardConfigured, setBoardConfigured] = useState(false)
+  const [isMarkingCell, setIsMarkingCell] = useState(false)
+  const [calledNumbers, setCalledNumbers] = useState<number[]>([])
+
+  const [supabase] = useState(() => createClient())
+
+  useEffect(() => {
+    const allMarkedPositions = new Set<number>()
+    const allNumbers: number[] = []
+
+    gameState.players.forEach((player) => {
+      const board = player.board as number[]
+      const marked = player.marked_positions as number[]
+
+      marked.forEach((pos) => {
+        const number = board[pos]
+        if (number && !allMarkedPositions.has(number)) {
+          allMarkedPositions.add(number)
+          allNumbers.push(number)
+        }
+      })
+    })
+
+    setCalledNumbers(allNumbers.sort((a, b) => a - b))
+  }, [gameState.players])
+
+  useEffect(() => {
+    console.log("[v0] Setting up real-time subscriptions for room:", roomCode, "roomId:", initialRoom.id)
+
+    const roomChannel = supabase
+      .channel(`room-${roomCode}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "rooms",
+          filter: `id=eq.${initialRoom.id}`,
+        },
+        (payload) => {
+          console.log("[v0] Room update received:", payload)
+          if (payload.new) {
+            setGameState((prev) => ({
+              ...prev,
+              room: payload.new as Room,
+            }))
+          }
+        },
+      )
+      .subscribe((status, err) => {
+        console.log("[v0] Room subscription status:", status)
+        if (err) console.error("[v0] Room subscription error:", err)
+      })
+
+    const playersChannel = supabase
+      .channel(`players-${roomCode}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "players",
+          filter: `room_id=eq.${initialRoom.id}`,
+        },
+        (payload) => {
+          console.log("[v0] Player update received:", payload)
+
+          if (payload.eventType === "UPDATE" && payload.new) {
+            setGameState((prev) => {
+              const updatedPlayer = payload.new as Player
+              const updatedPlayers = prev.players.map((p) => (p.id === updatedPlayer.id ? updatedPlayer : p))
+              console.log("[v0] Updated players state:", updatedPlayers)
+              return {
+                ...prev,
+                players: updatedPlayers,
+              }
+            })
+          } else if (payload.eventType === "INSERT" && payload.new) {
+            setGameState((prev) => {
+              const newPlayer = payload.new as Player
+              const playerExists = prev.players.some((p) => p.id === newPlayer.id)
+              if (playerExists) return prev
+
+              console.log("[v0] New player joined:", newPlayer)
+              return {
+                ...prev,
+                players: [...prev.players, newPlayer],
+              }
+            })
+          }
+        },
+      )
+      .subscribe((status, err) => {
+        console.log("[v0] Players subscription status:", status)
+        if (err) console.error("[v0] Players subscription error:", err)
+      })
+
+    return () => {
+      console.log("[v0] Cleaning up subscriptions")
+      supabase.removeChannel(roomChannel)
+      supabase.removeChannel(playersChannel)
+    }
+  }, [roomCode, initialRoom.id, supabase])
+
+  useEffect(() => {
+    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+    if (myPlayer && myPlayer.board && myPlayer.board.length === 25) {
+      setBoardConfigured(true)
+    }
+  }, [gameState.players, currentPlayer])
+
+  const handleBoardConfigured = async (board: number[]) => {
+    try {
+      const response = await fetch("/api/game/configure-board", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          roomId: gameState.room.id,
+          playerNumber: currentPlayer,
+          board,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to configure board")
+      }
+
+      setBoardConfigured(true)
+    } catch (error) {
+      console.error("[v0] Error configuring board:", error)
+      alert("Failed to configure board. Please try again.")
+    }
+  }
+
+  const handleRematch = async (reconfigureBoard: boolean) => {
+    try {
+      console.log("[v0] Starting rematch for room:", gameState.room.id, "reconfigureBoard:", reconfigureBoard)
+      const response = await fetch("/api/game/rematch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: gameState.room.id, reconfigureBoard }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("[v0] Rematch failed:", errorData)
+        throw new Error(errorData.error || "Failed to start rematch")
+      }
+
+      console.log("[v0] Rematch successful")
+      setCalledNumbers([])
+      setIsMarkingCell(false)
+
+      if (reconfigureBoard) {
+        setBoardConfigured(false)
+      }
+    } catch (error) {
+      console.error("[v0] Error starting rematch:", error)
+      alert(`Failed to start rematch: ${error instanceof Error ? error.message : "Please try again."}`)
+    }
+  }
+
+  if (!boardConfigured) {
+    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+    return (
+      <BoardConfiguration
+        roomCode={roomCode}
+        playerName={myPlayer?.player_name || "Player"}
+        gridSize={gameState.room.grid_size || 5}
+        totalNumbers={gameState.room.total_numbers || 25}
+        onBoardConfigured={handleBoardConfigured}
+      />
+    )
+  }
+
+  if (gameState.room.status === "waiting") {
+    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+    return (
+      <WaitingScreen
+        room={gameState.room}
+        players={gameState.players}
+        currentPlayerName={myPlayer?.player_name || "Player"}
+      />
+    )
+  }
+
+  const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+  const sortedPlayers = [...gameState.players].sort((a, b) => a.join_order - b.join_order)
+
+  if (!myPlayer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <Card className="p-8 max-w-md">
+          <h2 className="text-xl font-bold text-destructive mb-2">Player Not Found</h2>
+          <p className="text-muted-foreground">Unable to find your player data.</p>
+        </Card>
+      </div>
+    )
+  }
+
+  const showWinModal = gameState.room.status === "finished" && gameState.room.winner
+  const didIWin = gameState.room.winner === currentPlayer
+  const winnerPlayer = gameState.players.find((p) => p.player_number === gameState.room.winner)
+  const winnerName = winnerPlayer?.player_name || "Unknown"
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 p-2 sm:p-4">
+      <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
+        <GameHeader
+          roomCode={roomCode}
+          currentTurn={gameState.room.current_turn}
+          myPlayerNumber={currentPlayer}
+          winner={gameState.room.winner}
+          status={gameState.room.status}
+          calledNumbers={calledNumbers}
+          allPlayers={sortedPlayers}
+        />
+
+        <div className="flex justify-center px-2">
+          <BingoBoard
+            player={myPlayer}
+            isMyBoard={true}
+            isMyTurn={gameState.room.current_turn === currentPlayer}
+            roomId={gameState.room.id}
+            gameStatus={gameState.room.status}
+            gridSize={gameState.room.grid_size || 5}
+            isMarkingCell={isMarkingCell}
+            setIsMarkingCell={setIsMarkingCell}
+          />
+        </div>
+      </div>
+
+      {showWinModal && (
+        <WinModal
+          didIWin={didIWin}
+          winnerName={winnerName}
+          roomId={gameState.room.id}
+          playerNumber={currentPlayer}
+          onRematch={handleRematch}
+        />
+      )}
+    </div>
+  )
+}
