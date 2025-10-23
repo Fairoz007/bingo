@@ -1,8 +1,12 @@
+"use client"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Users, Clock } from "lucide-react"
+import { Trophy, Users, Clock, Copy, Check } from "lucide-react"
 import type { GameStatus, PlayerNumber, Player } from "@/lib/types"
 import { getCompletedLinesWithDetails } from "@/lib/game-utils"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
 
 interface GameHeaderProps {
   roomCode: string
@@ -23,6 +27,7 @@ export function GameHeader({
   calledNumbers,
   allPlayers,
 }: GameHeaderProps) {
+  const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
   const didIWin = winner === myPlayerNumber
 
@@ -32,125 +37,159 @@ export function GameHeader({
     : { completedCount: 0, bingoLetters: [], lineDetails: [], completedLines: [] }
 
   const allBingoLetters = ["B", "I", "N", "G", "O"]
-
   const currentTurnPlayer = allPlayers.find((p) => p.player_number === currentTurn)
 
+  const handleCopyRoomCode = () => {
+    navigator.clipboard.writeText(roomCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
-    <Card className="p-3 sm:p-4 md:p-6 shadow-lg border">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          <div className="bg-primary p-2 sm:p-3 rounded-lg">
-            <Users className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-primary-foreground" />
+    <div className="space-y-3 sm:space-y-4">
+      <Card className="p-3 sm:p-4 md:p-6 shadow-lg border-0 bg-gradient-to-r from-emerald-50 to-teal-50">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+          {/* Room Code Section */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-2 sm:p-3 rounded-lg shadow-md">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-white" />
+            </div>
+            <div className="flex-1 sm:flex-none">
+              <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide">Room Code</p>
+              <div className="flex items-center gap-2">
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-emerald-900 tracking-widest">{roomCode}</p>
+                <button
+                  onClick={handleCopyRoomCode}
+                  className="p-1.5 hover:bg-emerald-200 rounded-lg transition-colors"
+                  title="Copy room code"
+                >
+                  {copied ? (
+                    <Check className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-4 w-4 text-emerald-600" />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground font-medium">Room Code</p>
-            <p className="text-base sm:text-lg md:text-xl font-bold tracking-wider">{roomCode}</p>
+
+          {/* Turn Status Badge */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            {status === "finished" && winner ? (
+              <Badge
+                className={cn(
+                  "text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2 w-full sm:w-auto justify-center font-semibold shadow-md",
+                  didIWin
+                    ? "bg-gradient-to-r from-amber-400 to-amber-500 text-white"
+                    : "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-800",
+                )}
+              >
+                <Trophy className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                {didIWin ? "You Won!" : `${allPlayers.find((p) => p.player_number === winner)?.player_name} Won!`}
+              </Badge>
+            ) : (
+              <Badge
+                className={cn(
+                  "text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-300 w-full sm:w-auto justify-center font-semibold shadow-md",
+                  isMyTurn
+                    ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white animate-pulse"
+                    : "bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700",
+                )}
+              >
+                <Clock className="mr-1.5 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                {isMyTurn ? "Your Turn" : `${currentTurnPlayer?.player_name}'s Turn`}
+              </Badge>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          {status === "finished" && winner ? (
-            <Badge
-              variant={didIWin ? "default" : "secondary"}
-              className={`text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2 w-full sm:w-auto justify-center ${
-                didIWin ? "bg-green-600 text-white" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              <Trophy className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              {didIWin ? "You Won!" : `${allPlayers.find((p) => p.player_number === winner)?.player_name} Won!`}
-            </Badge>
-          ) : (
-            <Badge
-              variant={isMyTurn ? "default" : "secondary"}
-              className={cn(
-                "text-xs sm:text-sm md:text-base px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-300 w-full sm:w-auto justify-center",
-              )}
-            >
-              <Clock className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              {isMyTurn ? "Your Turn" : `${currentTurnPlayer?.player_name}'s Turn`}
-            </Badge>
+        {/* Players Section */}
+        <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-emerald-200">
+          <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide mb-3">
+            Players ({allPlayers.length})
+          </p>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
+            {allPlayers.map((player) => {
+              const isCurrentPlayer = player.player_number === myPlayerNumber
+              const isCurrentTurn = player.player_number === currentTurn
+              return (
+                <div
+                  key={player.id}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg transition-all duration-200 text-xs sm:text-sm font-medium",
+                    isCurrentTurn
+                      ? "bg-gradient-to-r from-emerald-100 to-teal-100 ring-2 ring-emerald-500 text-emerald-900"
+                      : "bg-slate-100 text-slate-700",
+                    isCurrentPlayer && "font-bold",
+                  )}
+                >
+                  <span className="text-lg sm:text-xl">{player.player_avatar || "👤"}</span>
+                  <span>
+                    {player.player_name}
+                    {isCurrentPlayer && <span className="ml-1 text-emerald-600 font-bold">(You)</span>}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Your Lines Section */}
+        <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-emerald-200">
+          <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide mb-3">
+            Your Lines: <span className="text-emerald-600 font-bold text-sm">{myLines.completedCount}</span>
+          </p>
+          <div className="flex justify-center gap-2 sm:gap-3">
+            {allBingoLetters.map((letter) => {
+              const completedLine = myLines.completedLines.find((line) => line.letter === letter)
+              const isCompleted = !!completedLine
+
+              return (
+                <div
+                  key={letter}
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg font-bold text-lg sm:text-xl md:text-2xl transition-all duration-300 shadow-md",
+                    isCompleted ? "text-white scale-105" : "bg-slate-200 text-slate-600",
+                  )}
+                  style={
+                    isCompleted
+                      ? {
+                          backgroundColor: completedLine.color,
+                        }
+                      : undefined
+                  }
+                >
+                  {letter}
+                </div>
+              )
+            })}
+          </div>
+          {myLines.completedCount >= 5 && (
+            <p className="text-center mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl font-bold text-emerald-600 animate-bounce">
+              🎉 BINGO! 🎉
+            </p>
           )}
         </div>
-      </div>
 
-      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
-        <p className="text-xs text-muted-foreground mb-2 sm:mb-3 font-medium">Players:</p>
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
-          {allPlayers.map((player) => {
-            const isCurrentPlayer = player.player_number === myPlayerNumber
-            const isCurrentTurn = player.player_number === currentTurn
-            return (
-              <div
-                key={player.id}
-                className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-2 py-1.5 sm:px-3 sm:py-2 rounded-lg transition-all duration-200 text-xs sm:text-sm",
-                  isCurrentTurn ? "bg-primary/10 ring-2 ring-primary" : "bg-muted",
-                  isCurrentPlayer && "font-bold",
-                )}
-              >
-                <span className="text-lg sm:text-2xl">{player.player_avatar || "👤"}</span>
-                <span className="text-xs sm:text-sm">
-                  {player.player_name}
-                  {isCurrentPlayer && <span className="ml-1 text-xs text-primary font-bold">(You)</span>}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
-        <p className="text-xs text-muted-foreground mb-2 sm:mb-3 font-medium">
-          Your Lines: <span className="text-primary font-bold text-base">{myLines.completedCount}</span> completed
-        </p>
-        <div className="flex justify-center gap-1.5 sm:gap-2 md:gap-3">
-          {allBingoLetters.map((letter) => {
-            const completedLine = myLines.completedLines.find((line) => line.letter === letter)
-            const isCompleted = !!completedLine
-
-            return (
-              <div
-                key={letter}
-                className={cn(
-                  "flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg font-bold text-lg sm:text-xl md:text-2xl transition-all duration-300",
-                  isCompleted ? "text-white scale-105" : "bg-muted text-muted-foreground",
-                )}
-                style={
-                  isCompleted
-                    ? {
-                        backgroundColor: completedLine.color,
-                      }
-                    : undefined
-                }
-              >
-                {letter}
-              </div>
-            )
-          })}
-        </div>
-        {myLines.completedCount >= 5 && (
-          <p className="text-center mt-2 sm:mt-3 text-base sm:text-lg md:text-xl font-bold text-green-600">BINGO!</p>
-        )}
-      </div>
-
-      {calledNumbers.length > 0 && (
-        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t">
-          <p className="text-xs text-muted-foreground mb-2 sm:mb-3 font-medium">
-            Called Numbers ({calledNumbers.length}):
-          </p>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-24 sm:max-h-32 overflow-y-auto">
-            {calledNumbers.map((num) => (
-              <Badge key={num} variant="secondary" className="text-xs sm:text-sm font-mono px-2 py-1 sm:px-3 sm:py-1.5">
-                {num}
-              </Badge>
-            ))}
+        {/* Called Numbers Section */}
+        {calledNumbers.length > 0 && (
+          <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-emerald-200">
+            <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide mb-3">
+              Called Numbers ({calledNumbers.length})
+            </p>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 max-h-20 sm:max-h-24 overflow-y-auto">
+              {calledNumbers.map((num) => (
+                <Badge
+                  key={num}
+                  className="text-xs sm:text-sm font-mono px-2 py-1 sm:px-3 sm:py-1.5 bg-emerald-100 text-emerald-700 border border-emerald-300"
+                >
+                  {num}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </Card>
+        )}
+      </Card>
+    </div>
   )
-}
-
-function cn(...classes: (string | boolean | undefined)[]) {
-  return classes.filter(Boolean).join(" ")
 }

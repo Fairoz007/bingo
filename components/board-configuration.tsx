@@ -5,27 +5,42 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { generateBingoBoard } from "@/lib/game-utils"
-import { Shuffle, Sparkles, Play } from "lucide-react"
+import { Shuffle, Play, RotateCcw } from "lucide-react"
+import { BoardConfigHeader } from "@/components/board-config-header"
+import { BoardConfigPlayerPanel } from "@/components/board-config-player-panel"
+import { Progress } from "@/components/ui/progress"
+
+import type { Player } from "@/lib/types"
 
 interface BoardConfigurationProps {
   roomCode: string
-  playerName: string
+  player: Player | undefined
   gridSize: number
   totalNumbers: number
+  players: Player[]
+  maxPlayers: number
   onBoardConfigured: (board: number[]) => void
 }
 
 export function BoardConfiguration({
   roomCode,
-  playerName,
+  player,
   gridSize,
   totalNumbers,
+  players,
+  maxPlayers,
   onBoardConfigured,
 }: BoardConfigurationProps) {
   const boardSize = gridSize * gridSize
   const [board, setBoard] = useState<(number | null)[]>(Array(boardSize).fill(null))
   const [errors, setErrors] = useState<Set<number>>(new Set())
   const [isRandomizing, setIsRandomizing] = useState(false)
+
+  const playerName = player?.player_name || "Player"
+  const playerJoinOrder = player?.join_order ?? players.length + 1
+  const playersReady = players.filter(
+    (p) => Array.isArray(p.board) && p.board.length === boardSize,
+  ).length
 
   const handleCellChange = (index: number, value: string) => {
     const num = value === "" ? null : Number.parseInt(value, 10)
@@ -62,6 +77,11 @@ export function BoardConfiguration({
     }, 300)
   }
 
+  const handleClearBoard = () => {
+    setBoard(Array(boardSize).fill(null))
+    setErrors(new Set())
+  }
+
   const handleSubmit = () => {
     if (board.some((num) => num === null)) {
       alert(`Please fill all cells with numbers 1-${totalNumbers}`)
@@ -84,108 +104,138 @@ export function BoardConfiguration({
 
   const isComplete = board.every((num) => num !== null) && errors.size === 0
   const filledCount = board.filter((num) => num !== null).length
+  const progressPercent = (filledCount / boardSize) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 p-3 sm:p-4 flex items-center justify-center">
-      <Card className="p-4 sm:p-6 md:p-8 max-w-4xl w-full space-y-4 sm:space-y-6 shadow-xl bg-white">
-        <div className="text-center space-y-2 sm:space-y-3">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-900">Configure Your Board</h1>
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col">
+      <BoardConfigHeader roomCode={roomCode} playerName={playerName} />
+
+      {/* Main Content */}
+      <div className="flex-1 p-3 sm:p-4 md:p-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+          {/* Left Sidebar: Player Panel */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-20 space-y-4">
+              <BoardConfigPlayerPanel
+                playerName={playerName}
+                playerNumber={playerJoinOrder}
+                playerCount={players.length}
+                playersReady={playersReady}
+                maxPlayers={maxPlayers}
+                gridSize={gridSize}
+                totalNumbers={totalNumbers}
+              />
+            </div>
           </div>
-          <div className="space-y-1">
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Welcome, <span className="font-semibold text-foreground">{playerName}</span>!
-            </p>
-            <p className="text-sm sm:text-base text-muted-foreground">
-              Room: <span className="font-mono font-bold text-base sm:text-lg text-blue-600">{roomCode}</span>
-            </p>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Grid Size:{" "}
-              <span className="font-bold text-blue-600">
-                {gridSize}×{gridSize}
-              </span>
-            </p>
+
+          {/* Main Content: Board Configuration */}
+          <div className="lg:col-span-3 space-y-4 md:space-y-6">
+            {/* Title Section */}
+            <div className="text-center space-y-2">
+              <h1 className="text-3xl md:text-4xl font-bold text-emerald-900">Configure Your Personal Bingo Card</h1>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Enter unique numbers from 1-{totalNumbers} in each cell to create your bingo card.
+                Other players will configure their own boards separately.
+              </p>
+            </div>
+
+            {/* Progress Section */}
+            <Card className="bg-white border-emerald-200 p-4 md:p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-emerald-900">Board Progress</span>
+                <span className="text-sm font-bold text-emerald-600">
+                  {filledCount}/{boardSize} cells
+                </span>
+              </div>
+              <Progress value={progressPercent} className="h-3" />
+              <p className="text-xs text-muted-foreground">
+                {isComplete
+                  ? "✓ Board complete! Ready to start."
+                  : `Fill ${boardSize - filledCount} more cell${boardSize - filledCount !== 1 ? "s" : ""} to continue.`}
+              </p>
+            </Card>
+
+            {/* Grid Section */}
+            <Card className="bg-white border-emerald-200 p-4 md:p-6">
+              <div
+                className="gap-2 md:gap-3"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                }}
+              >
+                {board.map((num, index) => (
+                  <Input
+                    key={index}
+                    type="number"
+                    min="1"
+                    max={totalNumbers}
+                    value={num ?? ""}
+                    onChange={(e) => handleCellChange(index, e.target.value)}
+                    className={`text-center text-base md:text-lg font-bold h-12 md:h-14 transition-all duration-200 rounded-lg ${
+                      errors.has(index)
+                        ? "border-2 border-red-500 bg-red-50 focus:border-red-600"
+                        : num !== null
+                          ? "border-2 border-emerald-500 bg-emerald-50 focus:border-emerald-600"
+                          : "border-2 border-gray-300 hover:border-emerald-400 focus:border-emerald-500 focus:bg-emerald-50"
+                    }`}
+                    placeholder="—"
+                  />
+                ))}
+              </div>
+
+              {/* Error Message */}
+              {errors.size > 0 && (
+                <p className="text-sm text-red-600 text-center mt-4 bg-red-50 p-3 rounded-lg">
+                  ⚠ Please fix invalid or duplicate numbers (must be unique and between 1-{totalNumbers})
+                </p>
+              )}
+            </Card>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={handleRandomize}
+                disabled={isRandomizing}
+                variant="outline"
+                size="lg"
+                className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 h-12 bg-transparent"
+              >
+                <Shuffle className={`w-5 h-5 ${isRandomizing ? "animate-spin" : ""}`} />
+                {isRandomizing ? "Generating..." : "Generate Random"}
+              </Button>
+
+              <Button
+                onClick={handleClearBoard}
+                variant="outline"
+                size="lg"
+                className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-12 bg-transparent"
+              >
+                <RotateCcw className="w-5 h-5" />
+                Clear Board
+              </Button>
+
+              <Button
+                onClick={handleSubmit}
+                disabled={!isComplete}
+                size="lg"
+                className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-12"
+              >
+                <Play className="w-5 h-5" />
+                {isComplete ? "Ready to Play" : `Fill ${boardSize - filledCount} more`}
+              </Button>
+            </div>
+
+            {/* Footer Info */}
+            <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 p-4">
+              <p className="text-sm text-amber-900">
+                <span className="font-semibold">💡 Tip:</span> Click "Generate Random" to quickly fill your board with
+                random numbers, or manually enter numbers for a custom board.
+              </p>
+            </Card>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto px-2">
-            Enter unique numbers from 1-{totalNumbers} in each cell, or click the button below to generate random
-            numbers
-          </p>
         </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-semibold text-blue-600">
-              {filledCount}/{boardSize} cells filled
-            </span>
-          </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-600 transition-all duration-500 ease-out"
-              style={{ width: `${(filledCount / boardSize) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-center px-2">
-          <Button
-            onClick={handleRandomize}
-            disabled={isRandomizing}
-            size="lg"
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 w-full sm:w-auto text-sm sm:text-base h-12 sm:h-auto"
-          >
-            <Shuffle className={`w-4 h-4 sm:w-5 sm:h-5 ${isRandomizing ? "animate-spin" : ""}`} />
-            {isRandomizing ? "Generating..." : "Generate Random Numbers"}
-          </Button>
-        </div>
-
-        <div
-          className="gap-1.5 sm:gap-2 md:gap-3 max-w-3xl mx-auto px-2"
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-          }}
-        >
-          {board.map((num, index) => (
-            <Input
-              key={index}
-              type="number"
-              min="1"
-              max={totalNumbers}
-              value={num ?? ""}
-              onChange={(e) => handleCellChange(index, e.target.value)}
-              className={`text-center text-sm sm:text-base md:text-lg font-bold h-10 sm:h-12 md:h-14 transition-all duration-200 ${
-                errors.has(index)
-                  ? "border-2 border-red-500 bg-red-50"
-                  : num !== null
-                    ? "border-2 border-green-500 bg-green-50"
-                    : "border-2 border-gray-300 hover:border-blue-400 focus:border-blue-500"
-              }`}
-              placeholder={(index + 1).toString()}
-            />
-          ))}
-        </div>
-
-        {errors.size > 0 && (
-          <p className="text-sm text-red-600 text-center">
-            Please fix invalid or duplicate numbers (must be unique and between 1-{totalNumbers})
-          </p>
-        )}
-
-        <div className="flex justify-center pt-2 px-2">
-          <Button
-            onClick={handleSubmit}
-            disabled={!isComplete}
-            size="lg"
-            className="w-full max-w-md gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-base sm:text-lg h-12 sm:h-14"
-          >
-            <Play className="w-4 h-4 sm:w-5 sm:h-5" />
-            {isComplete ? "Start Game" : `Fill ${boardSize - filledCount} more cells`}
-          </Button>
-        </div>
-      </Card>
+      </div>
     </div>
   )
 }

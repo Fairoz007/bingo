@@ -55,6 +55,7 @@ export async function POST(request: NextRequest) {
         player_count: 1,
         grid_size: gridSize,
         total_numbers: totalNumbers,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       })
       .select()
       .single()

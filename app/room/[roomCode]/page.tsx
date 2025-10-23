@@ -10,19 +10,24 @@ export default async function RoomPage({
   params: { roomCode: string }
   searchParams: { player?: string }
 }) {
-  const roomCode = params.roomCode.toUpperCase()
-  const currentPlayer = searchParams.player as "player1" | "player2" | undefined
+  const { roomCode } = params
+  const { player } = searchParams
+  
+  const normalizedRoomCode = roomCode.toUpperCase()
+  const currentPlayerParam = player?.toLowerCase()
 
-  if (!currentPlayer || (currentPlayer !== "player1" && currentPlayer !== "player2")) {
+  if (!currentPlayerParam || !/^player\d+$/.test(currentPlayerParam)) {
     redirect("/")
   }
+
+  const currentPlayer = currentPlayerParam as string
 
   const supabase = await createClient()
 
   const { data: room, error: roomError } = await supabase
     .from("rooms")
     .select("*")
-    .eq("room_code", roomCode)
+    .eq("room_code", normalizedRoomCode)
     .maybeSingle()
 
   if (roomError) {
@@ -41,7 +46,7 @@ export default async function RoomPage({
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="p-8 max-w-md">
           <h2 className="text-xl font-bold text-destructive mb-2">Room Not Found</h2>
-          <p className="text-muted-foreground">The room code "{roomCode}" does not exist.</p>
+          <p className="text-muted-foreground">The room code "{normalizedRoomCode}" does not exist.</p>
         </Card>
       </div>
     )
@@ -64,11 +69,27 @@ export default async function RoomPage({
     )
   }
 
+  const playerList = players || []
+  const isKnownPlayer = playerList.some((player) => player.player_number?.toLowerCase() === currentPlayer)
+
+  if (!isKnownPlayer) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <Card className="p-8 max-w-md text-center space-y-3">
+          <h2 className="text-xl font-bold text-destructive">Player Not Recognized</h2>
+          <p className="text-muted-foreground">
+            We couldn't find your player in room "{normalizedRoomCode}". Please rejoin the room from the home page.
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <GameRoomClient
       initialRoom={room}
-      initialPlayers={players || []}
-      roomCode={roomCode}
+      initialPlayers={playerList}
+      roomCode={normalizedRoomCode}
       currentPlayer={currentPlayer}
     />
   )

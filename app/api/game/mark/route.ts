@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
           console.error("[v0] Update player error:", updateError)
         }
 
-        if (checkWin(newMarkedPositions)) {
+        if (checkWin(newMarkedPositions, room.grid_size)) {
           const { error: winError } = await supabase
             .from("rooms")
             .update({

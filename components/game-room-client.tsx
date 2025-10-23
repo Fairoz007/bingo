@@ -127,11 +127,14 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   }, [roomCode, initialRoom.id, supabase])
 
   useEffect(() => {
+    const gridSize = gameState.room.grid_size || 5
+    const expectedBoardSize = gridSize * gridSize
     const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
-    if (myPlayer && myPlayer.board && myPlayer.board.length === 25) {
+
+    if (myPlayer && Array.isArray(myPlayer.board) && myPlayer.board.length === expectedBoardSize) {
       setBoardConfigured(true)
     }
-  }, [gameState.players, currentPlayer])
+  }, [gameState.players, currentPlayer, gameState.room.grid_size])
 
   const handleBoardConfigured = async (board: number[]) => {
     try {
@@ -189,9 +192,11 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
     return (
       <BoardConfiguration
         roomCode={roomCode}
-        playerName={myPlayer?.player_name || "Player"}
+        player={myPlayer}
         gridSize={gameState.room.grid_size || 5}
         totalNumbers={gameState.room.total_numbers || 25}
+        players={gameState.players}
+        maxPlayers={gameState.room.max_players}
         onBoardConfigured={handleBoardConfigured}
       />
     )
@@ -213,10 +218,10 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
 
   if (!myPlayer) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="p-8 max-w-md">
-          <h2 className="text-xl font-bold text-destructive mb-2">Player Not Found</h2>
-          <p className="text-muted-foreground">Unable to find your player data.</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-4">
+        <Card className="p-6 sm:p-8 max-w-md border-0 shadow-lg">
+          <h2 className="text-lg sm:text-xl font-bold text-red-600 mb-2">Player Not Found</h2>
+          <p className="text-slate-600">Unable to find your player data.</p>
         </Card>
       </div>
     )
@@ -228,8 +233,8 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const winnerName = winnerPlayer?.player_name || "Unknown"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-blue-100 p-2 sm:p-4">
-      <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6">
+      <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
         <GameHeader
           roomCode={roomCode}
           currentTurn={gameState.room.current_turn}
@@ -240,7 +245,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
           allPlayers={sortedPlayers}
         />
 
-        <div className="flex justify-center px-2">
+        <div className="flex justify-center px-2 sm:px-0">
           <BingoBoard
             player={myPlayer}
             isMyBoard={true}
