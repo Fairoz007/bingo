@@ -38,20 +38,20 @@ export function AvatarCarousel({ value, onChange }: AvatarCarouselProps) {
           variant="ghost"
           size="sm"
           onClick={handlePrev}
-          className="h-10 w-10 p-0 hover:bg-slate-100"
+          className="h-9 w-9 p-0 hover:bg-slate-100 sm:h-10 sm:w-10"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
 
-        <div className="flex flex-1 gap-2 justify-center">
+        <div className="flex flex-1 gap-2 justify-center flex-wrap sm:flex-nowrap sm:overflow-visible">
           {visibleAvatars.map((avatar) => (
             <button
               key={avatar}
               onClick={() => onChange(avatar)}
-              className={`h-14 w-14 rounded-lg flex items-center justify-center text-3xl transition-all duration-200 ${
+              className={`h-12 w-12 rounded-lg flex items-center justify-center text-2xl transition-all duration-200 sm:h-14 sm:w-14 sm:text-3xl ${
                 value === avatar
-                  ? "bg-emerald-500 ring-2 ring-emerald-600 scale-110 shadow-lg"
-                  : "bg-slate-100 hover:bg-slate-200 hover:scale-105"
+                  ? "bg-emerald-500 ring-2 ring-emerald-600 scale-[1.05] sm:scale-110 shadow-lg"
+                  : "bg-slate-100 hover:bg-slate-200 hover:scale-[1.03] sm:hover:scale-105"
               }`}
             >
               {avatar}
@@ -64,7 +64,7 @@ export function AvatarCarousel({ value, onChange }: AvatarCarouselProps) {
           variant="ghost"
           size="sm"
           onClick={handleNext}
-          className="h-10 w-10 p-0 hover:bg-slate-100"
+          className="h-9 w-9 p-0 hover:bg-slate-100 sm:h-10 sm:w-10"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
