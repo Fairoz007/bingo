@@ -10,12 +10,12 @@ import { AvatarCarousel } from "@/components/avatar-carousel"
 import { PlayerCountSelector } from "@/components/player-count-selector"
 import { Users, LogIn, AlertCircle } from "lucide-react"
 
-const AVATAR_OPTIONS = ["👤", "😀", "😎", "🎮", "🎯", "🎲", "🎪", "🎨", "🎭", "🎸"]
+const DEFAULT_AVATAR = "🎮"
 
 export default function HomePage() {
   const router = useRouter()
   const [playerName, setPlayerName] = useState("")
-  const [playerAvatar, setPlayerAvatar] = useState(AVATAR_OPTIONS[0])
+  const [playerAvatar, setPlayerAvatar] = useState(DEFAULT_AVATAR)
   const [maxPlayers, setMaxPlayers] = useState("2")
   const [roomCode, setRoomCode] = useState("")
   const [isCreating, setIsCreating] = useState(false)
