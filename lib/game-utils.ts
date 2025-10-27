@@ -92,16 +92,16 @@ export function getCompletedLinesWithDetails(
     const rowPositions = Array.from({ length: gridSize }, (_, i) => row * gridSize + i)
     if (rowPositions.every((pos) => marked.has(pos))) {
       const lineIndex = completedLines.length
-      if (lineIndex < 5) {
-        completedLines.push({
-          type: "row",
-          index: row,
-          positions: rowPositions,
-          color: colors[lineIndex],
-          letter: letters[lineIndex],
-        })
-        lineDetails.push(`Row ${row + 1}`)
-      }
+      const color = colors[lineIndex % colors.length]
+      const letter = letters[lineIndex % letters.length]
+      completedLines.push({
+        type: "row",
+        index: row,
+        positions: rowPositions,
+        color,
+        letter,
+      })
+      lineDetails.push(`Row ${row + 1}`)
     }
   }
 
@@ -110,16 +110,16 @@ export function getCompletedLinesWithDetails(
     const colPositions = Array.from({ length: gridSize }, (_, i) => col + i * gridSize)
     if (colPositions.every((pos) => marked.has(pos))) {
       const lineIndex = completedLines.length
-      if (lineIndex < 5) {
-        completedLines.push({
-          type: "column",
-          index: col,
-          positions: colPositions,
-          color: colors[lineIndex],
-          letter: letters[lineIndex],
-        })
-        lineDetails.push(`Column ${col + 1}`)
-      }
+      const color = colors[lineIndex % colors.length]
+      const letter = letters[lineIndex % letters.length]
+      completedLines.push({
+        type: "column",
+        index: col,
+        positions: colPositions,
+        color,
+        letter,
+      })
+      lineDetails.push(`Column ${col + 1}`)
     }
   }
 
@@ -127,32 +127,32 @@ export function getCompletedLinesWithDetails(
   const diagonal1 = Array.from({ length: gridSize }, (_, i) => i * gridSize + i)
   if (diagonal1.every((pos) => marked.has(pos))) {
     const lineIndex = completedLines.length
-    if (lineIndex < 5) {
-      completedLines.push({
-        type: "diagonal",
-        index: 0,
-        positions: diagonal1,
-        color: colors[lineIndex],
-        letter: letters[lineIndex],
-      })
-      lineDetails.push("Diagonal \\")
-    }
+    const color = colors[lineIndex % colors.length]
+    const letter = letters[lineIndex % letters.length]
+    completedLines.push({
+      type: "diagonal",
+      index: 0,
+      positions: diagonal1,
+      color,
+      letter,
+    })
+    lineDetails.push("Diagonal \\")
   }
 
   // Check diagonal (top-right to bottom-left)
   const diagonal2 = Array.from({ length: gridSize }, (_, i) => i * gridSize + (gridSize - 1 - i))
   if (diagonal2.every((pos) => marked.has(pos))) {
     const lineIndex = completedLines.length
-    if (lineIndex < 5) {
-      completedLines.push({
-        type: "diagonal",
-        index: 1,
-        positions: diagonal2,
-        color: colors[lineIndex],
-        letter: letters[lineIndex],
-      })
-      lineDetails.push("Diagonal /")
-    }
+    const color = colors[lineIndex % colors.length]
+    const letter = letters[lineIndex % letters.length]
+    completedLines.push({
+      type: "diagonal",
+      index: 1,
+      positions: diagonal2,
+      color,
+      letter,
+    })
+    lineDetails.push("Diagonal /")
   }
 
   const bingoLetters = completedLines.map((line) => line.letter)
@@ -185,7 +185,7 @@ export function getCompletedLines(
 // Check if the player has won by completing at least 5 lines based on grid size
 export function checkWin(markedPositions: number[], gridSize = 5): boolean {
   const { completedCount } = getCompletedLines(markedPositions, gridSize)
-  return completedCount >= 5 // Must complete at least 5 lines (any combination)
+  return completedCount >= gridSize // Scale win condition with grid size
 }
 
 export function calculateGridSize(playerCount: number): { gridSize: number; totalNumbers: number } {
