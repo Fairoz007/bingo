@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import type { Player, GameStatus } from "@/lib/types"
+import type { Player, GameStatus, PlayerNumber } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { User, Crown, Eye } from "lucide-react"
 import { getCompletedLinesWithDetails } from "@/lib/game-utils"
@@ -16,6 +16,7 @@ interface BingoBoardProps {
   gridSize?: number
   isMarkingCell?: boolean
   setIsMarkingCell?: (value: boolean) => void
+  winner?: PlayerNumber | null
 }
 
 export function BingoBoard({
@@ -27,6 +28,7 @@ export function BingoBoard({
   gridSize = 5,
   isMarkingCell = false,
   setIsMarkingCell,
+  winner,
 }: BingoBoardProps) {
   const markedSet = new Set(player.marked_positions)
 
@@ -71,7 +73,7 @@ export function BingoBoard({
     }
   }
 
-  const hasWinningLine = player.marked_positions.length >= 5 && gameStatus === "finished"
+  const hasWinningLine = gameStatus === "finished" && winner === player.player_number
 
   return (
     <Card
@@ -83,12 +85,12 @@ export function BingoBoard({
       )}
     >
       <CardHeader className="pb-3 sm:pb-4 border-b border-emerald-100 px-3 sm:px-6 bg-gradient-to-r from-emerald-50 to-teal-50">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 justify-center">
             <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-1.5 sm:p-2 rounded-lg shadow-md">
               <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
-            <div>
+            <div className="text-center sm:text-left">
               <CardTitle className="text-base sm:text-lg md:text-xl font-bold text-emerald-900">
                 {player.player_name}
               </CardTitle>
@@ -96,19 +98,24 @@ export function BingoBoard({
             </div>
             {hasWinningLine && <Crown className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 ml-auto sm:ml-0" />}
           </div>
-          {isMyBoard ? (
-            <span className="text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full shadow-md">
-              Your Board
-            </span>
-          ) : (
-            <span className="text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1.5">
-              <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              View Only
-            </span>
-          )}
+          <div className="flex justify-center sm:justify-end">
+            {isMyBoard ? (
+              <span className="text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full shadow-md">
+                Your Board
+              </span>
+            ) : (
+              <span className="text-xs sm:text-sm font-medium text-slate-600 bg-slate-100 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex items-center gap-1.5">
+                <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                View Only
+              </span>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-4 sm:pb-6">
+        <div className="text-center text-xs sm:text-sm font-semibold text-emerald-800 mb-2 sm:mb-3">
+          {completedLines.length >= gridSize ? "Bingo!" : `Lines: ${completedLines.length}/${gridSize}`}
+        </div>
         <div
           className="gap-1.5 sm:gap-2 md:gap-3"
           style={{
