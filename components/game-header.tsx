@@ -17,6 +17,7 @@ interface GameHeaderProps {
   calledNumbers: number[]
   allPlayers: Player[]
   gridSize: number
+  playerCount: number
 }
 
 export function GameHeader({
@@ -28,6 +29,7 @@ export function GameHeader({
   calledNumbers,
   allPlayers,
   gridSize,
+  playerCount,
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
@@ -136,30 +138,34 @@ export function GameHeader({
           </div>
         </div>
 
-        {/* Your Lines Section */}
+        {/* BINGO Word and Lines Section */}
         <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-emerald-200">
-          <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide mb-3">
-            Your Lines: <span className="text-emerald-600 font-bold text-sm">{myLines.completedCount}</span>
+          <p className="text-xs text-emerald-700 font-semibold uppercase tracking-wide mb-3 text-center">
+            Complete Lines: <span className="text-emerald-600 font-bold">{myLines.completedCount}</span>
           </p>
           <div className="flex justify-center gap-2 sm:gap-3">
-            {allBingoLetters.map((letter) => {
-              const completedLine = myLines.completedLines.find((line) => line.letter === letter)
-              const isCompleted = !!completedLine
+            {["B", "I", "N", "G", "O", ...Array(Math.max(0, (playerCount || 2) - 2)).fill("O")].map((letter, index) => {
+              const completedLine = myLines.completedLines[index]
+              const isCompleted = index < myLines.completedCount
+              // Fixed set of colors for consistency
+              const colors = [
+                'bg-red-500', 'bg-blue-500', 'bg-green-500', 
+                'bg-yellow-500', 'bg-purple-500', 'bg-pink-500',
+                'bg-indigo-500', 'bg-teal-500', 'bg-orange-500'
+              ]
+              // Use a consistent color based on the letter position
+              const colorIndex = index % colors.length
+              const bgColor = colors[colorIndex]
 
               return (
                 <div
-                  key={letter}
-                  className={cn(
-                    "flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-lg font-bold text-lg sm:text-xl md:text-2xl transition-all duration-300 shadow-md",
-                    isCompleted ? "text-white scale-105" : "bg-slate-200 text-slate-600",
-                  )}
-                  style={
-                    isCompleted
-                      ? {
-                          backgroundColor: completedLine.color,
-                        }
-                      : undefined
-                  }
+                  key={index}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-md flex items-center justify-center text-lg sm:text-xl font-bold transition-all duration-300 shadow-md ${
+                    isCompleted 
+                      ? `${bgColor} text-white scale-105` 
+                      : 'bg-gray-200 text-gray-400'
+                  }`}
+                  title={isCompleted ? `Line ${completedLine?.lineNumber} (${completedLine?.type})` : undefined}
                 >
                   {letter}
                 </div>
