@@ -85,7 +85,7 @@ export function getCompletedLinesWithDetails(
   const lineDetails: string[] = []
 
   const colors = ["#FF3B30", "#34C759", "#007AFF", "#FFD60A", "#FF9500"]
-  const letters = ["B", "I", "N", "G", "O"]
+  const letters = ["B", "I", "N", "G", "O", ...Array(Math.max(0, gridSize - 5)).fill("O")].slice(0, gridSize)
 
   // Build all winning lines (rows, columns, both diagonals)
   type LineDef = { type: "row" | "column" | "diagonal"; index: number; positions: number[]; label: string }
