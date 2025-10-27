@@ -111,8 +111,8 @@ export default function HomePage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
       <Card className="w-full max-w-2xl shadow-xl border-0 animate-in fade-in slide-up duration-500">
         <CardHeader className="text-center space-y-2 pb-8 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-lg border-b border-emerald-100">
-          <CardTitle className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-            Bingo Game
+          <CardTitle className=" sm:text-5xl  bg-gradient-to-r from-emerald-600 to-teal-600 ">
+            അണ്ടിശ്ശേരി ജ്യോതി
           </CardTitle>
           <CardDescription className="text-base text-slate-600">
             Create or join a multiplayer room and play with friends
