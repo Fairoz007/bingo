@@ -158,20 +158,15 @@ export function BingoBoard({
         </div>
 
         {/* Status Messages */}
-        {isMyBoard && isMyTurn && gameStatus === "playing" && (
+        {isMyTurn && gameStatus === "playing" && (
           <p className="text-xs sm:text-sm text-center text-white font-semibold mt-4 sm:mt-5 bg-gradient-to-r from-emerald-500 to-teal-600 py-2.5 px-3 sm:px-4 rounded-lg shadow-md">
             ✨ Your turn! Click a number
           </p>
         )}
 
-        {isMyBoard && !isMyTurn && gameStatus === "playing" && (
+        {!isMyTurn && gameStatus === "playing" && (
           <p className="text-xs sm:text-sm text-center text-slate-600 mt-4 sm:mt-5 bg-slate-100 py-2.5 px-3 sm:px-4 rounded-lg">
             ⏳ Waiting for opponent...
-          </p>
-        )}
-        {!isMyBoard && gameStatus === "playing" && (
-          <p className="text-xs sm:text-sm text-center text-slate-600 mt-4 sm:mt-5 bg-slate-100 py-2.5 px-3 sm:px-4 rounded-lg">
-            👀 Opponent's board (view only)
           </p>
         )}
       </CardContent>
