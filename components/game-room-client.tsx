@@ -244,6 +244,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
           calledNumbers={calledNumbers}
           allPlayers={sortedPlayers}
           gridSize={gameState.room.grid_size || 5}
+          playerCount={gameState.players.length}
         />
 
         <div className="flex justify-center px-2 sm:px-0">
@@ -254,6 +255,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
             roomId={gameState.room.id}
             gameStatus={gameState.room.status}
             gridSize={gameState.room.grid_size || 5}
+            playerCount={gameState.players.length}
             isMarkingCell={isMarkingCell}
             setIsMarkingCell={setIsMarkingCell}
             winner={gameState.room.winner}
