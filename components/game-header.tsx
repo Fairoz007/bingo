@@ -16,6 +16,7 @@ interface GameHeaderProps {
   status: GameStatus
   calledNumbers: number[]
   allPlayers: Player[]
+  gridSize: number
 }
 
 export function GameHeader({
@@ -26,6 +27,7 @@ export function GameHeader({
   status,
   calledNumbers,
   allPlayers,
+  gridSize,
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
@@ -33,7 +35,7 @@ export function GameHeader({
 
   const myPlayer = allPlayers.find((p) => p.player_number === myPlayerNumber)
   const myLines = myPlayer
-    ? getCompletedLinesWithDetails(myPlayer.marked_positions as number[])
+    ? getCompletedLinesWithDetails(myPlayer.marked_positions as number[], gridSize)
     : { completedCount: 0, bingoLetters: [], lineDetails: [], completedLines: [] }
 
   const allBingoLetters = ["B", "I", "N", "G", "O"]
@@ -164,7 +166,7 @@ export function GameHeader({
               )
             })}
           </div>
-          {myLines.completedCount >= 5 && (
+          {myLines.completedCount >= gridSize && (
             <p className="text-center mt-3 sm:mt-4 text-lg sm:text-xl md:text-2xl font-bold text-emerald-600 animate-bounce">
               🎉 BINGO! 🎉
             </p>

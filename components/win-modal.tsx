@@ -12,9 +12,10 @@ interface WinModalProps {
   roomId: string
   playerNumber: string
   onRematch: (reconfigureBoard: boolean) => void
+  gridSize: number
 }
 
-export function WinModal({ didIWin, winnerName, roomId, playerNumber, onRematch }: WinModalProps) {
+export function WinModal({ didIWin, winnerName, roomId, playerNumber, onRematch, gridSize }: WinModalProps) {
   const router = useRouter()
   const [show, setShow] = useState(false)
   const [isExiting, setIsExiting] = useState(false)
@@ -73,7 +74,9 @@ export function WinModal({ didIWin, winnerName, roomId, playerNumber, onRematch 
         <CardContent className="space-y-2 sm:space-y-3 px-4 sm:px-6">
           {didIWin && (
             <div className="bg-primary/10 rounded-lg p-3 sm:p-4 text-center mb-3 sm:mb-4">
-              <p className="text-xs sm:text-sm font-medium text-primary">You completed all 5 lines (B-I-N-G-O)!</p>
+              <p className="text-xs sm:text-sm font-medium text-primary">
+                You completed all {gridSize} lines{gridSize === 5 ? " (B-I-N-G-O)" : ""}!
+              </p>
             </div>
           )}
 

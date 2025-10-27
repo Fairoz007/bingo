@@ -34,6 +34,10 @@ export function BingoBoard({
 
   const { completedLines } = getCompletedLinesWithDetails(player.marked_positions as number[], gridSize)
 
+  const denseGrid = gridSize >= 8
+  const gapClass = denseGrid ? "gap-1 sm:gap-1.5 md:gap-2" : "gap-1.5 sm:gap-2 md:gap-3"
+  const fontClass = denseGrid ? "text-xs sm:text-sm md:text-base" : "text-sm sm:text-base md:text-lg"
+
   const handleCellClick = async (index: number) => {
     if (!isMyBoard || !isMyTurn || markedSet.has(index) || gameStatus === "finished" || isMarkingCell) {
       if (!isMyTurn && isMyBoard && gameStatus === "playing") {
@@ -78,7 +82,7 @@ export function BingoBoard({
   return (
     <Card
       className={cn(
-        "shadow-lg transition-all duration-300 border-0 w-full max-w-2xl",
+        "shadow-lg transition-all duration-300 border-0 w-full max-w-2xl overflow-hidden min-w-0",
         isMyBoard && isMyTurn && gameStatus === "playing"
           ? "ring-2 ring-emerald-500 bg-gradient-to-br from-emerald-50 to-teal-50"
           : "bg-white",
@@ -117,7 +121,7 @@ export function BingoBoard({
           {completedLines.length >= gridSize ? "Bingo!" : `Lines: ${completedLines.length}/${gridSize}`}
         </div>
         <div
-          className="gap-1.5 sm:gap-2 md:gap-3"
+          className={cn("grid place-items-stretch", gapClass)}
           style={{
             display: "grid",
             gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
@@ -133,12 +137,13 @@ export function BingoBoard({
                 onClick={() => handleCellClick(index)}
                 disabled={!isClickable}
                 variant={isMarked ? "default" : "outline"}
+                style={{ aspectRatio: 1, width: "100%" }}
                 className={cn(
-                  "h-10 sm:h-12 md:h-14 text-sm sm:text-base md:text-lg font-bold transition-all duration-200 p-0 rounded-lg border-2",
+                  `${fontClass} font-bold transition-all duration-200 p-0 rounded-lg border-2 w-full`,
                   isMarked &&
-                    "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 scale-95 shadow-md",
+                    "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 md:scale-95 shadow-md",
                   isClickable &&
-                    "hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer active:scale-95 border-emerald-300",
+                    "md:hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer md:active:scale-95 border-emerald-300",
                   !isMyBoard && "cursor-default opacity-60",
                   !isClickable &&
                     isMyBoard &&
