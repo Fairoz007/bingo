@@ -233,8 +233,8 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const winnerName = winnerPlayer?.player_name || "Unknown"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6">
-      <div className="max-w-4xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6 pb-24 md:pb-6">
+      <div className="max-w-6xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
         <GameHeader
           roomCode={roomCode}
           currentTurn={gameState.room.current_turn}
@@ -243,20 +243,41 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
           status={gameState.room.status}
           calledNumbers={calledNumbers}
           allPlayers={sortedPlayers}
+          gridSize={gameState.room.grid_size || 5}
         />
 
-        <div className="flex justify-center px-2 sm:px-0">
-          <BingoBoard
-            player={myPlayer}
-            isMyBoard={true}
-            isMyTurn={gameState.room.current_turn === currentPlayer}
-            roomId={gameState.room.id}
-            gameStatus={gameState.room.status}
-            gridSize={gameState.room.grid_size || 5}
-            isMarkingCell={isMarkingCell}
-            setIsMarkingCell={setIsMarkingCell}
-          />
-        </div>
+        {(() => {
+          const manyPlayers = sortedPlayers.length > 2
+          const mobileCols = (gameState.room.grid_size || 5) >= 8 ? 1 : manyPlayers ? 2 : 1
+          return (
+            <div className="px-2 sm:px-0">
+              <div
+                className={
+                  `grid ${mobileCols === 2 ? "grid-cols-2" : "grid-cols-1"} sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 auto-rows-max gap-2 sm:gap-4 md:gap-6`
+                }
+              >
+                {sortedPlayers.map((p) => (
+                  <div
+                    key={p.id}
+                    className={"w-full min-w-0"}
+                  >
+                    <BingoBoard
+                      player={p}
+                      isMyBoard={p.player_number === currentPlayer}
+                      isMyTurn={gameState.room.current_turn === currentPlayer && p.player_number === currentPlayer}
+                      roomId={gameState.room.id}
+                      gameStatus={gameState.room.status}
+                      gridSize={gameState.room.grid_size || 5}
+                      isMarkingCell={p.player_number === currentPlayer ? isMarkingCell : false}
+                      setIsMarkingCell={p.player_number === currentPlayer ? setIsMarkingCell : undefined}
+                      winner={gameState.room.winner}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {showWinModal && (
@@ -266,8 +287,22 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
           roomId={gameState.room.id}
           playerNumber={currentPlayer}
           onRematch={handleRematch}
+          gridSize={gameState.room.grid_size || 5}
         />
       )}
+      {/* Mobile sticky bottom bar for controls/info */}
+      <div className="fixed bottom-0 inset-x-0 md:hidden bg-white/90 backdrop-blur border-t border-emerald-200 p-3 shadow-lg z-50">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-emerald-900">Room: {roomCode}</div>
+          <div className="text-xs font-medium text-slate-700">
+            {gameState.room.status === "finished"
+              ? `${winnerName} Won`
+              : gameState.room.current_turn === currentPlayer
+                ? "Your Turn"
+                : `${sortedPlayers.find((p) => p.player_number === gameState.room.current_turn)?.player_name || "..."}'s Turn`}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
