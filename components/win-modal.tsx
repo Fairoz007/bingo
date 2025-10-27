@@ -47,79 +47,101 @@ export function WinModal({ didIWin, winnerName, roomId, playerNumber, onRematch,
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-3 sm:p-4 z-50 animate-in fade-in duration-300">
-      <Card
-        className={`w-full max-w-md shadow-2xl transform transition-all duration-500 ${
-          show ? "scale-100 opacity-100" : "scale-95 opacity-0"
-        }`}
-      >
-        <CardHeader className="text-center space-y-3 sm:space-y-4 pb-3 sm:pb-4 px-4 sm:px-6">
-          <div className="flex justify-center">
-            <div className={`rounded-full p-4 sm:p-6 ${didIWin ? "bg-yellow-100 animate-bounce" : "bg-muted"}`}>
-              <Trophy
-                className={`h-12 w-12 sm:h-16 sm:w-16 ${didIWin ? "text-yellow-600" : "text-muted-foreground"}`}
-              />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in">
+      <Card className={`w-full max-w-sm transform transition-all duration-300 bg-white shadow-xl ${show ? 'scale-100 opacity-100' : 'scale-95 opacity-0'}`}>
+        <CardHeader className="text-center space-y-3 p-6 pb-4">
+          <div className="relative mx-auto w-20 h-20">
+            <div className={`absolute inset-0 rounded-full flex items-center justify-center transition-all duration-500 ${
+              didIWin 
+                ? 'bg-gradient-to-br from-yellow-300 to-amber-400 shadow-md' 
+                : 'bg-gray-200'
+            }`}>
+              <Trophy className={`h-10 w-10 transition-transform ${didIWin ? 'text-yellow-700' : 'text-gray-400'}`} />
+              {didIWin && (
+                <div className="absolute -top-1 -right-1 bg-yellow-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+                  {gridSize}
+                </div>
+              )}
             </div>
           </div>
-          {didIWin && (
-            <div className="text-4xl sm:text-6xl font-black tracking-widest text-primary animate-pulse">BINGO!</div>
-          )}
-          <CardTitle className="text-2xl sm:text-3xl font-bold text-balance">
-            {didIWin ? "Congratulations!" : "Game Over"}
-          </CardTitle>
-          <CardDescription className="text-base sm:text-lg">
-            {didIWin ? "You won the game!" : `${winnerName} won the game!`}
-          </CardDescription>
+          
+          <div className="space-y-1">
+            {didIWin && (
+              <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-500 to-amber-600">
+                BINGO!
+              </div>
+            )}
+            <h3 className="text-xl font-bold text-gray-800">
+              {didIWin ? 'Congratulations!' : 'Game Over'}
+            </h3>
+            <p className="text-gray-600 text-sm">
+              {didIWin 
+                ? 'You won the game! 🎉' 
+                : <>{winnerName} won the game! <span className="text-yellow-500">🏆</span></>
+              }
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-2 sm:space-y-3 px-4 sm:px-6">
+        
+        <CardContent className="space-y-3 p-6 pt-0">
           {didIWin && (
-            <div className="bg-primary/10 rounded-lg p-3 sm:p-4 text-center mb-3 sm:mb-4">
-              <p className="text-xs sm:text-sm font-medium text-primary">
-                You completed all {gridSize} lines{gridSize === 5 ? " (B-I-N-G-O)" : ""}!
-              </p>
+            <div className="bg-green-50 rounded-lg p-3 text-center border border-green-100 text-sm text-green-700">
+              Completed <span className="font-semibold">{gridSize} lines</span>
+              {gridSize === 5 && <span className="block text-xs text-green-600 mt-1">(B-I-N-G-O)</span>}
             </div>
           )}
 
-          <Button
-            onClick={() => onRematch(false)}
-            className="w-full h-11 sm:h-12 text-sm sm:text-lg"
-            size="lg"
-            variant="default"
-          >
-            <RotateCcw className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            Play Again (Same Board)
-          </Button>
-
-          <Button
-            onClick={() => onRematch(true)}
-            className="w-full h-11 sm:h-12 text-sm sm:text-lg"
-            size="lg"
-            variant="outline"
-          >
-            <Settings className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            Reconfigure Board
-          </Button>
-
-          <Button
-            onClick={handleExitRoom}
-            disabled={isExiting}
-            className="w-full h-11 sm:h-12 text-sm sm:text-lg bg-transparent"
-            size="lg"
-            variant="outline"
-          >
-            <LogOut className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            {isExiting ? "Exiting..." : "Exit Room"}
-          </Button>
-
-          <Button
-            onClick={() => router.push("/")}
-            className="w-full h-11 sm:h-12 text-sm sm:text-lg"
-            size="lg"
-            variant="secondary"
-          >
-            <Home className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-            Back to Home
-          </Button>
+          <div className="space-y-2">
+            <Button 
+              onClick={() => onRematch(false)}
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium"
+            >
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Play Again
+            </Button>
+            
+            <Button
+              onClick={() => onRematch(true)}
+              variant="outline"
+              className="w-full h-11 text-sm font-medium border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Rematch
+            </Button>
+            
+            <div className="flex space-x-2 pt-1">
+              <Button
+                onClick={handleExitRoom}
+                disabled={isExiting}
+                variant="outline"
+                className="flex-1 h-9 text-xs font-medium border-gray-200 hover:border-red-300 hover:bg-red-50"
+              >
+                {isExiting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Exiting...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="mr-1.5 h-3.5 w-3.5" />
+                    Exit Room
+                  </>
+                )}
+              </Button>
+              
+              <Button
+                onClick={() => router.push('/')}
+                variant="ghost"
+                className="flex-1 h-9 text-xs text-gray-600 hover:bg-gray-100"
+              >
+                <Home className="mr-1.5 h-3.5 w-3.5" />
+                Home
+              </Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
