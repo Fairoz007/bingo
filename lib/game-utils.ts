@@ -87,72 +87,44 @@ export function getCompletedLinesWithDetails(
   const colors = ["#FF3B30", "#34C759", "#007AFF", "#FFD60A", "#FF9500"]
   const letters = ["B", "I", "N", "G", "O"]
 
-  // Check all rows
+  // Build all winning lines (rows, columns, both diagonals)
+  type LineDef = { type: "row" | "column" | "diagonal"; index: number; positions: number[]; label: string }
+  const lines: LineDef[] = []
+
+  // Rows
   for (let row = 0; row < gridSize; row++) {
-    const rowPositions = Array.from({ length: gridSize }, (_, i) => row * gridSize + i)
-    if (rowPositions.every((pos) => marked.has(pos))) {
-      const lineIndex = completedLines.length
-      const color = colors[lineIndex % colors.length]
-      const letter = letters[lineIndex % letters.length]
-      completedLines.push({
-        type: "row",
-        index: row,
-        positions: rowPositions,
-        color,
-        letter,
-      })
-      lineDetails.push(`Row ${row + 1}`)
-    }
+    const positions = Array.from({ length: gridSize }, (_, i) => row * gridSize + i)
+    lines.push({ type: "row", index: row, positions, label: `Row ${row + 1}` })
   }
 
-  // Check all columns
+  // Columns
   for (let col = 0; col < gridSize; col++) {
-    const colPositions = Array.from({ length: gridSize }, (_, i) => col + i * gridSize)
-    if (colPositions.every((pos) => marked.has(pos))) {
+    const positions = Array.from({ length: gridSize }, (_, i) => col + i * gridSize)
+    lines.push({ type: "column", index: col, positions, label: `Column ${col + 1}` })
+  }
+
+  // Diagonals
+  const diag1 = Array.from({ length: gridSize }, (_, i) => i * gridSize + i)
+  lines.push({ type: "diagonal", index: 0, positions: diag1, label: "Diagonal \\" })
+
+  const diag2 = Array.from({ length: gridSize }, (_, i) => i * gridSize + (gridSize - 1 - i))
+  lines.push({ type: "diagonal", index: 1, positions: diag2, label: "Diagonal /" })
+
+  // Evaluate completion
+  for (const line of lines) {
+    if (line.positions.every((pos) => marked.has(pos))) {
       const lineIndex = completedLines.length
       const color = colors[lineIndex % colors.length]
       const letter = letters[lineIndex % letters.length]
       completedLines.push({
-        type: "column",
-        index: col,
-        positions: colPositions,
+        type: line.type,
+        index: line.index,
+        positions: line.positions,
         color,
         letter,
       })
-      lineDetails.push(`Column ${col + 1}`)
+      lineDetails.push(line.label)
     }
-  }
-
-  // Check diagonal (top-left to bottom-right)
-  const diagonal1 = Array.from({ length: gridSize }, (_, i) => i * gridSize + i)
-  if (diagonal1.every((pos) => marked.has(pos))) {
-    const lineIndex = completedLines.length
-    const color = colors[lineIndex % colors.length]
-    const letter = letters[lineIndex % letters.length]
-    completedLines.push({
-      type: "diagonal",
-      index: 0,
-      positions: diagonal1,
-      color,
-      letter,
-    })
-    lineDetails.push("Diagonal \\")
-  }
-
-  // Check diagonal (top-right to bottom-left)
-  const diagonal2 = Array.from({ length: gridSize }, (_, i) => i * gridSize + (gridSize - 1 - i))
-  if (diagonal2.every((pos) => marked.has(pos))) {
-    const lineIndex = completedLines.length
-    const color = colors[lineIndex % colors.length]
-    const letter = letters[lineIndex % letters.length]
-    completedLines.push({
-      type: "diagonal",
-      index: 1,
-      positions: diagonal2,
-      color,
-      letter,
-    })
-    lineDetails.push("Diagonal /")
   }
 
   const bingoLetters = completedLines.map((line) => line.letter)
