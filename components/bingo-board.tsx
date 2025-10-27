@@ -14,6 +14,7 @@ interface BingoBoardProps {
   roomId: string
   gameStatus: GameStatus
   gridSize?: number
+  playerCount?: number
   isMarkingCell?: boolean
   setIsMarkingCell?: (value: boolean) => void
   winner?: PlayerNumber | null
@@ -26,6 +27,7 @@ export function BingoBoard({
   roomId,
   gameStatus,
   gridSize = 5,
+  playerCount = 2,
   isMarkingCell = false,
   setIsMarkingCell,
   winner,
@@ -117,9 +119,6 @@ export function BingoBoard({
         </div>
       </CardHeader>
       <CardContent className="pt-4 sm:pt-6 px-3 sm:px-6 pb-4 sm:pb-6">
-        <div className="text-center text-xs sm:text-sm font-semibold text-emerald-800 mb-2 sm:mb-3">
-          {completedLines.length >= gridSize ? "Bingo!" : `Lines: ${completedLines.length}/${gridSize}`}
-        </div>
         <div
           className={cn("grid place-items-stretch", gapClass)}
           style={{
