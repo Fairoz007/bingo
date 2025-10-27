@@ -233,7 +233,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const winnerName = winnerPlayer?.player_name || "Unknown"
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6 pb-24 md:pb-6">
+    <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6 pb-24 md:pb-6">
       <div className="max-w-6xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
         <GameHeader
           roomCode={roomCode}
@@ -248,7 +248,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
 
         {(() => {
           const manyPlayers = sortedPlayers.length > 2
-          const mobileCols = (gameState.room.grid_size || 5) >= 8 ? 1 : manyPlayers ? 2 : 1
+          const mobileCols = (gameState.room.grid_size || 5) >= 7 ? 1 : manyPlayers ? 2 : 1
           return (
             <div className="px-2 sm:px-0">
               <div
