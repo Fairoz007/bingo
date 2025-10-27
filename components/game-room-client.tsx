@@ -246,38 +246,19 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
           gridSize={gameState.room.grid_size || 5}
         />
 
-        {(() => {
-          const manyPlayers = sortedPlayers.length > 2
-          const mobileCols = (gameState.room.grid_size || 5) >= 7 ? 1 : manyPlayers ? 2 : 1
-          return (
-            <div className="px-2 sm:px-0">
-              <div
-                className={
-                  `grid ${mobileCols === 2 ? "grid-cols-2" : "grid-cols-1"} sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 auto-rows-max gap-2 sm:gap-4 md:gap-6`
-                }
-              >
-                {sortedPlayers.map((p) => (
-                  <div
-                    key={p.id}
-                    className={"w-full min-w-0"}
-                  >
-                    <BingoBoard
-                      player={p}
-                      isMyBoard={p.player_number === currentPlayer}
-                      isMyTurn={gameState.room.current_turn === currentPlayer && p.player_number === currentPlayer}
-                      roomId={gameState.room.id}
-                      gameStatus={gameState.room.status}
-                      gridSize={gameState.room.grid_size || 5}
-                      isMarkingCell={p.player_number === currentPlayer ? isMarkingCell : false}
-                      setIsMarkingCell={p.player_number === currentPlayer ? setIsMarkingCell : undefined}
-                      winner={gameState.room.winner}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )
-        })()}
+        <div className="flex justify-center px-2 sm:px-0">
+          <BingoBoard
+            player={myPlayer}
+            isMyBoard={true}
+            isMyTurn={gameState.room.current_turn === currentPlayer}
+            roomId={gameState.room.id}
+            gameStatus={gameState.room.status}
+            gridSize={gameState.room.grid_size || 5}
+            isMarkingCell={isMarkingCell}
+            setIsMarkingCell={setIsMarkingCell}
+            winner={gameState.room.winner}
+          />
+        </div>
       </div>
 
       {showWinModal && (
