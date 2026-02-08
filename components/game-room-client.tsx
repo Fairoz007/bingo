@@ -193,6 +193,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
               isMarkingCell={isMarkingCell}
               setIsMarkingCell={setIsMarkingCell}
               winner={gameState.room.winner}
+              turnExpiresAt={gameState.room.turn_expires_at}
             />
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, internalMutation } from "./_generated/server";
 import { validateBoardNumber, checkWin, getNextPlayerTurn } from "./utils";
+import { internal } from "./_generated/api";
 
 export const configureBoard = mutation({
     args: {
@@ -53,11 +54,59 @@ export const configureBoard = mutation({
             players.length === max_players &&
             players.every((p) => p.board && p.board.length === expectedBoardSize)
         ) {
+            const turnDuration = 60 * 1000;
+            const turnExpiresAt = Date.now() + turnDuration;
+
             await ctx.db.patch(roomId, {
                 status: "playing",
                 current_turn: "player1",
+                turn_expires_at: turnExpiresAt,
+            });
+
+            await ctx.scheduler.runAfter(turnDuration, internal.game.autoPassTurn, {
+                roomId,
+                expectedTurn: "player1",
+                marketAt: turnExpiresAt,
             });
         }
+    },
+});
+
+export const autoPassTurn = internalMutation({
+    args: {
+        roomId: v.id("rooms"),
+        expectedTurn: v.string(),
+        marketAt: v.number(),
+    },
+    handler: async (ctx, args) => {
+        const { roomId, expectedTurn, marketAt } = args;
+        const room = await ctx.db.get(roomId);
+
+        if (!room || room.status !== "playing") return;
+
+        // If turn has already changed or game ended, do nothing
+        if (room.current_turn !== expectedTurn) return;
+
+        // If turn time hasn't actually expired (e.g. was extended), do nothing
+        // using a small buffer for execution delay
+        if (room.turn_expires_at && room.turn_expires_at > Date.now() + 1000) return;
+
+        // Force pass turn
+        const nextTurn = getNextPlayerTurn(expectedTurn, room.player_count);
+        const turnDuration = 60 * 1000;
+        const nextTurnExpiresAt = Date.now() + turnDuration;
+
+        await ctx.db.patch(roomId, {
+            current_turn: nextTurn,
+            turn_expires_at: nextTurnExpiresAt,
+        });
+
+        // Schedule next check
+        await ctx.scheduler.runAfter(turnDuration, internal.game.autoPassTurn, {
+            roomId,
+            expectedTurn: nextTurn,
+            marketAt: nextTurnExpiresAt,
+        });
     },
 });
 
@@ -137,7 +186,21 @@ export const mark = mutation({
         }
 
         const nextTurn = getNextPlayerTurn(playerNumber, allPlayers.length);
-        await ctx.db.patch(roomId, { current_turn: nextTurn });
+        const turnDuration = 60 * 1000;
+        const nextTurnExpiresAt = Date.now() + turnDuration;
+
+        await ctx.db.patch(roomId, {
+            current_turn: nextTurn,
+            turn_expires_at: nextTurnExpiresAt,
+        });
+
+        await ctx.scheduler.runAfter(turnDuration, internal.game.autoPassTurn, {
+            roomId,
+            expectedTurn: nextTurn,
+            marketAt: nextTurnExpiresAt,
+        });
+
+
 
         return { success: true, won: false };
     },
@@ -151,11 +214,23 @@ export const rematch = mutation({
     handler: async (ctx, args) => {
         const { roomId, reconfigureBoard } = args;
 
+        const turnDuration = 60 * 1000;
+        const turnExpiresAt = Date.now() + turnDuration;
+
         await ctx.db.patch(roomId, {
             status: reconfigureBoard ? "waiting" : "playing",
             current_turn: "player1",
             winner: undefined,
+            turn_expires_at: reconfigureBoard ? undefined : turnExpiresAt,
         });
+
+        if (!reconfigureBoard) {
+            await ctx.scheduler.runAfter(turnDuration, internal.game.autoPassTurn, {
+                roomId,
+                expectedTurn: "player1",
+                marketAt: turnExpiresAt,
+            });
+        }
 
         const players = await ctx.db
             .query("players")

@@ -11,6 +11,7 @@ export interface Room {
   player_count: number // Current number of players
   grid_size: number // Dynamic grid size (5x5, 6x6, 7x7, etc.)
   total_numbers: number // Total numbers in the grid (25, 36, 49, etc.)
+  turn_expires_at?: number // Timestamp when turn expires
   created_at: string
 }
 

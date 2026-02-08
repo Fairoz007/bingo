@@ -12,6 +12,7 @@ export default defineSchema({
     grid_size: v.number(),
     total_numbers: v.number(),
     expires_at: v.string(), // ISO date string
+    turn_expires_at: v.optional(v.number()), // timestamp for turn expiration
   }).index("by_room_code", ["room_code"]),
 
   players: defineTable({

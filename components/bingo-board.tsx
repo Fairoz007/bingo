@@ -1,5 +1,5 @@
 "use client"
-
+import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Player, GameStatus, PlayerNumber } from "@/lib/types"
 import { cn } from "@/lib/utils"
@@ -22,6 +22,7 @@ interface BingoBoardProps {
   isMarkingCell?: boolean
   setIsMarkingCell?: (value: boolean) => void
   winner?: PlayerNumber | null
+  turnExpiresAt?: number
 }
 
 export function BingoBoard({
@@ -35,8 +36,26 @@ export function BingoBoard({
   isMarkingCell = false,
   setIsMarkingCell,
   winner,
+  turnExpiresAt,
 }: BingoBoardProps) {
   const markedSet = new Set(player.marked_positions)
+  const [timeLeft, setTimeLeft] = useState<number>(0)
+
+  useEffect(() => {
+    if (!turnExpiresAt || gameStatus !== "playing") {
+      setTimeLeft(0)
+      return
+    }
+
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((turnExpiresAt - Date.now()) / 1000))
+      setTimeLeft(remaining)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [turnExpiresAt, gameStatus])
 
   const { completedLines } = getCompletedLinesWithDetails(player.marked_positions as number[], gridSize)
 
@@ -230,6 +249,11 @@ export function BingoBoard({
                   <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/10 rounded-full blur-xl animate-pulse" />
                   <p className="text-white font-bold text-center flex items-center justify-center gap-2 text-sm sm:text-base">
                     <span className="animate-bounce">👉</span> It's your turn! Pick a number
+                    {timeLeft > 0 && (
+                      <span className="block text-xs font-normal opacity-90 mt-1">
+                        Time remaining: {timeLeft}s
+                      </span>
+                    )}
                   </p>
                 </motion.div>
               ) : !isMyTurn && gameStatus === "playing" ? (
@@ -242,6 +266,11 @@ export function BingoBoard({
                 >
                   <p className="text-slate-500 text-center font-medium flex items-center justify-center gap-2 text-sm sm:text-base">
                     <span className="animate-spin text-xl">⏳</span> Waiting for opponent...
+                    {timeLeft > 0 && (
+                      <span className="block text-xs font-normal text-slate-400 mt-1">
+                        Auto-pass in: {timeLeft}s
+                      </span>
+                    )}
                   </p>
                 </motion.div>
               ) : null}
