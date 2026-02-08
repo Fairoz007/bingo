@@ -11,6 +11,7 @@ import { WaitingScreen } from "@/components/waiting-screen"
 import { WinModal } from "@/components/win-modal"
 import { BoardConfiguration } from "@/components/board-configuration"
 import { Card } from "@/components/ui/card"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface GameRoomClientProps {
   initialRoom: Room
@@ -20,20 +21,16 @@ interface GameRoomClientProps {
 }
 
 export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentPlayer }: GameRoomClientProps) {
-  // Cast string ID to Convex ID - assumption: initialRoom.id matches Convex ID pattern or we use it as placeholder
+  // Cast string ID to Convex ID
   const roomId = initialRoom.id as Id<"rooms">
 
   const room = useQuery(api.rooms.getByCode, { roomCode })
   const players = useQuery(api.rooms.getPlayers, { roomId: room?._id ?? roomId })
 
   const currentRoom = room ? ({ ...room, id: room._id } as unknown as Room) : initialRoom
-  // Stabilize reference to currentPlayers
+
   const currentPlayers = useMemo(() => {
     if (!players) return initialPlayers;
-
-    // Sort players to ensure consistent order, if possible. Or just map.
-    // players from Convex are already sorted by join_order in getPlayers.
-    // However, map returns new array.
     return players.map((p) => ({ ...p, id: p._id })) as unknown as Player[];
   }, [players, initialPlayers])
 
@@ -96,13 +93,11 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
 
   const handleRematch = async (reconfigureBoard: boolean) => {
     try {
-      console.log("[v0] Starting rematch for room:", gameState.room.id, "reconfigureBoard:", reconfigureBoard)
       await rematch({
         roomId: gameState.room.id as Id<"rooms">,
         reconfigureBoard
       })
 
-      console.log("[v0] Rematch successful")
       setCalledNumbers([])
       setIsMarkingCell(false)
 
@@ -146,10 +141,10 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
 
   if (!myPlayer) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-4">
-        <Card className="p-6 sm:p-8 max-w-md border-0 shadow-lg">
-          <h2 className="text-lg sm:text-xl font-bold text-red-600 mb-2">Player Not Found</h2>
-          <p className="text-slate-600">Unable to find your player data.</p>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+        <Card className="p-8 max-w-md border-0 shadow-xl bg-white/80 backdrop-blur">
+          <h2 className="text-xl font-bold text-red-500 mb-2">Player Not Found</h2>
+          <p className="text-slate-600">Unable to find your player data in this room.</p>
         </Card>
       </div>
     )
@@ -161,59 +156,93 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const winnerName = winnerPlayer?.player_name || "Unknown"
 
   return (
-    <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-100 p-2 sm:p-4 md:p-6 pb-24 md:pb-6">
-      <div className="max-w-6xl mx-auto space-y-3 sm:space-y-4 md:space-y-6">
-        <GameHeader
-          roomCode={roomCode}
-          currentTurn={gameState.room.current_turn}
-          myPlayerNumber={currentPlayer}
-          winner={gameState.room.winner}
-          status={gameState.room.status}
-          calledNumbers={calledNumbers}
-          allPlayers={sortedPlayers}
-          gridSize={gameState.room.grid_size || 5}
-          playerCount={gameState.players.length}
-        />
+    <div className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 relative selection:bg-emerald-200">
+      {/* Abstract Background Shapes */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-emerald-200/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-teal-200/20 rounded-full blur-[100px] animate-pulse delay-1000" />
+        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] bg-blue-200/20 rounded-full blur-[100px] animate-pulse delay-2000" />
+      </div>
 
-        <div className="flex justify-center px-2 sm:px-0">
-          <BingoBoard
-            player={myPlayer}
-            isMyBoard={true}
-            isMyTurn={gameState.room.current_turn === currentPlayer}
-            roomId={gameState.room.id}
-            gameStatus={gameState.room.status}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="relative h-screen flex flex-col overflow-y-auto pb-24 md:pb-6 scrollbar-hide"
+      >
+        <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+          <GameHeader
+            roomCode={roomCode}
+            currentTurn={gameState.room.current_turn}
+            myPlayerNumber={currentPlayer}
+            winner={gameState.room.winner}
+            status={gameState.room.status}
+            calledNumbers={calledNumbers}
+            allPlayers={sortedPlayers}
             gridSize={gameState.room.grid_size || 5}
             playerCount={gameState.players.length}
-            isMarkingCell={isMarkingCell}
-            setIsMarkingCell={setIsMarkingCell}
-            winner={gameState.room.winner}
           />
-        </div>
-      </div>
 
-      {showWinModal && (
-        <WinModal
-          didIWin={didIWin}
-          winnerName={winnerName}
-          roomId={gameState.room.id}
-          playerNumber={currentPlayer}
-          onRematch={handleRematch}
-          gridSize={gameState.room.grid_size || 5}
-        />
-      )}
-      {/* Mobile sticky bottom bar for controls/info */}
-      <div className="fixed bottom-0 inset-x-0 md:hidden bg-white/90 backdrop-blur border-t border-emerald-200 p-3 shadow-lg z-50">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-emerald-900">Room: {roomCode}</div>
-          <div className="text-xs font-medium text-slate-700">
-            {gameState.room.status === "finished"
-              ? `${winnerName} Won`
-              : gameState.room.current_turn === currentPlayer
-                ? "Your Turn"
-                : `${sortedPlayers.find((p) => p.player_number === gameState.room.current_turn)?.player_name || "..."}'s Turn`}
+          <div className="flex justify-center px-2 sm:px-0 pb-10">
+            <BingoBoard
+              player={myPlayer}
+              isMyBoard={true}
+              isMyTurn={gameState.room.current_turn === currentPlayer}
+              roomId={gameState.room.id}
+              gameStatus={gameState.room.status}
+              gridSize={gameState.room.grid_size || 5}
+              playerCount={gameState.players.length}
+              isMarkingCell={isMarkingCell}
+              setIsMarkingCell={setIsMarkingCell}
+              winner={gameState.room.winner}
+            />
           </div>
         </div>
-      </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {showWinModal && (
+          <WinModal
+            didIWin={didIWin}
+            winnerName={winnerName}
+            roomId={gameState.room.id}
+            playerNumber={currentPlayer}
+            onRematch={handleRematch}
+            gridSize={gameState.room.grid_size || 5}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile sticky bottom bar */}
+      <motion.div
+        initial={{ y: 100 }}
+        animate={{ y: 0 }}
+        className="fixed bottom-0 inset-x-0 md:hidden bg-white/90 backdrop-blur-xl border-t border-emerald-100 p-4 shadow-lg z-40"
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Current Room</span>
+            <span className="text-sm font-black text-slate-800 font-mono tracking-widest">{roomCode}</span>
+          </div>
+
+          <div className="flex-1 flex justify-end">
+            {gameState.room.status === "finished" ? (
+              <div className="px-3 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold">
+                Game Over
+              </div>
+            ) : gameState.room.current_turn === currentPlayer ? (
+              <div className="px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold shadow-lg shadow-emerald-200 animate-pulse">
+                Your Turn
+              </div>
+            ) : (
+              <div className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-slate-400" />
+                {sortedPlayers.find((p) => p.player_number === gameState.room.current_turn)?.player_name || "..."}'s Turn
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
     </div>
   )
 }
