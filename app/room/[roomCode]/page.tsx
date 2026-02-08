@@ -7,15 +7,15 @@ import { Id } from "@/convex/_generated/dataModel"
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
-export default async function RoomPage({
-  params,
-  searchParams,
-}: {
-  params: { roomCode: string }
-  searchParams: { player?: string }
+export default async function RoomPage(props: {
+  params: Promise<{ roomCode: string }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const params = await props.params;
+  const searchParams = await props.searchParams;
+
   const { roomCode } = params
-  const { player } = searchParams
+  const player = typeof searchParams.player === 'string' ? searchParams.player : undefined
 
   const normalizedRoomCode = roomCode.toUpperCase()
   const currentPlayerParam = player?.toLowerCase()
