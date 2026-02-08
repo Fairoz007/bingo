@@ -6,6 +6,9 @@ import type { Player, GameStatus, PlayerNumber } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { User, Crown, Eye } from "lucide-react"
 import { getCompletedLinesWithDetails } from "@/lib/game-utils"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 
 interface BingoBoardProps {
   player: Player
@@ -40,6 +43,8 @@ export function BingoBoard({
   const gapClass = denseGrid ? "gap-1 sm:gap-1.5 md:gap-2" : "gap-1.5 sm:gap-2 md:gap-3"
   const fontClass = denseGrid ? "text-xs sm:text-sm md:text-base" : "text-sm sm:text-base md:text-lg"
 
+  const mark = useMutation(api.game.mark)
+
   const handleCellClick = async (index: number) => {
     if (!isMyBoard || !isMyTurn || markedSet.has(index) || gameStatus === "finished" || isMarkingCell) {
       if (!isMyTurn && isMyBoard && gameStatus === "playing") {
@@ -55,23 +60,14 @@ export function BingoBoard({
     }
 
     try {
-      const response = await fetch("/api/game/mark", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId,
-          playerNumber: player.player_number,
-          position: index,
-        }),
+      await mark({
+        roomId: roomId as Id<"rooms">,
+        playerNumber: player.player_number,
+        position: index,
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        alert(data.error || "Failed to mark cell")
-      }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[v0] Mark cell error:", error)
-      alert("Failed to mark cell. Please try again.")
+      alert(error.message || "Failed to mark cell")
     } finally {
       if (setIsMarkingCell) {
         setIsMarkingCell(false)
@@ -140,14 +136,14 @@ export function BingoBoard({
                 className={cn(
                   `${fontClass} font-bold transition-all duration-200 p-0 rounded-lg border-2 w-full`,
                   isMarked &&
-                    "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 md:scale-95 shadow-md",
+                  "bg-gradient-to-br from-emerald-500 to-teal-600 text-white border-emerald-600 md:scale-95 shadow-md",
                   isClickable &&
-                    "md:hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer md:active:scale-95 border-emerald-300",
+                  "md:hover:scale-105 hover:border-emerald-400 hover:bg-emerald-50 cursor-pointer md:active:scale-95 border-emerald-300",
                   !isMyBoard && "cursor-default opacity-60",
                   !isClickable &&
-                    isMyBoard &&
-                    !isMarked &&
-                    "cursor-default opacity-80 border-slate-200 hover:scale-100",
+                  isMyBoard &&
+                  !isMarked &&
+                  "cursor-default opacity-80 border-slate-200 hover:scale-100",
                 )}
               >
                 {number}

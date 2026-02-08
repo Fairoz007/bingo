@@ -1,7 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState, useMemo } from "react"
+import { useQuery, useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
 import type { GameState, Room, Player } from "@/lib/types"
 import { BingoBoard } from "@/components/bingo-board"
 import { GameHeader } from "@/components/game-header"
@@ -18,15 +20,34 @@ interface GameRoomClientProps {
 }
 
 export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentPlayer }: GameRoomClientProps) {
-  const [gameState, setGameState] = useState<GameState>({
-    room: initialRoom,
-    players: initialPlayers,
-  })
+  // Cast string ID to Convex ID - assumption: initialRoom.id matches Convex ID pattern or we use it as placeholder
+  const roomId = initialRoom.id as Id<"rooms">
+
+  const room = useQuery(api.rooms.getByCode, { roomCode })
+  const players = useQuery(api.rooms.getPlayers, { roomId: room?._id ?? roomId })
+
+  const currentRoom = room ? ({ ...room, id: room._id } as unknown as Room) : initialRoom
+  // Stabilize reference to currentPlayers
+  const currentPlayers = useMemo(() => {
+    if (!players) return initialPlayers;
+
+    // Sort players to ensure consistent order, if possible. Or just map.
+    // players from Convex are already sorted by join_order in getPlayers.
+    // However, map returns new array.
+    return players.map((p) => ({ ...p, id: p._id })) as unknown as Player[];
+  }, [players, initialPlayers])
+
+  const gameState: GameState = useMemo(() => ({
+    room: currentRoom,
+    players: currentPlayers,
+  }), [currentRoom, currentPlayers])
+
   const [boardConfigured, setBoardConfigured] = useState(false)
   const [isMarkingCell, setIsMarkingCell] = useState(false)
   const [calledNumbers, setCalledNumbers] = useState<number[]>([])
 
-  const [supabase] = useState(() => createClient())
+  const configureBoard = useMutation(api.game.configureBoard)
+  const rematch = useMutation(api.game.rematch)
 
   useEffect(() => {
     const allMarkedPositions = new Set<number>()
@@ -49,84 +70,6 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   }, [gameState.players])
 
   useEffect(() => {
-    console.log("[v0] Setting up real-time subscriptions for room:", roomCode, "roomId:", initialRoom.id)
-
-    const roomChannel = supabase
-      .channel(`room-${roomCode}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "rooms",
-          filter: `id=eq.${initialRoom.id}`,
-        },
-        (payload) => {
-          console.log("[v0] Room update received:", payload)
-          if (payload.new) {
-            setGameState((prev) => ({
-              ...prev,
-              room: payload.new as Room,
-            }))
-          }
-        },
-      )
-      .subscribe((status, err) => {
-        console.log("[v0] Room subscription status:", status)
-        if (err) console.error("[v0] Room subscription error:", err)
-      })
-
-    const playersChannel = supabase
-      .channel(`players-${roomCode}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "players",
-          filter: `room_id=eq.${initialRoom.id}`,
-        },
-        (payload) => {
-          console.log("[v0] Player update received:", payload)
-
-          if (payload.eventType === "UPDATE" && payload.new) {
-            setGameState((prev) => {
-              const updatedPlayer = payload.new as Player
-              const updatedPlayers = prev.players.map((p) => (p.id === updatedPlayer.id ? updatedPlayer : p))
-              console.log("[v0] Updated players state:", updatedPlayers)
-              return {
-                ...prev,
-                players: updatedPlayers,
-              }
-            })
-          } else if (payload.eventType === "INSERT" && payload.new) {
-            setGameState((prev) => {
-              const newPlayer = payload.new as Player
-              const playerExists = prev.players.some((p) => p.id === newPlayer.id)
-              if (playerExists) return prev
-
-              console.log("[v0] New player joined:", newPlayer)
-              return {
-                ...prev,
-                players: [...prev.players, newPlayer],
-              }
-            })
-          }
-        },
-      )
-      .subscribe((status, err) => {
-        console.log("[v0] Players subscription status:", status)
-        if (err) console.error("[v0] Players subscription error:", err)
-      })
-
-    return () => {
-      console.log("[v0] Cleaning up subscriptions")
-      supabase.removeChannel(roomChannel)
-      supabase.removeChannel(playersChannel)
-    }
-  }, [roomCode, initialRoom.id, supabase])
-
-  useEffect(() => {
     const gridSize = gameState.room.grid_size || 5
     const expectedBoardSize = gridSize * gridSize
     const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
@@ -138,22 +81,14 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
 
   const handleBoardConfigured = async (board: number[]) => {
     try {
-      const response = await fetch("/api/game/configure-board", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomId: gameState.room.id,
-          playerNumber: currentPlayer,
-          board,
-        }),
+      await configureBoard({
+        roomId: gameState.room.id as Id<"rooms">,
+        playerNumber: currentPlayer,
+        board,
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to configure board")
-      }
-
       setBoardConfigured(true)
-    } catch (error) {
+    } catch (error: any) {
       console.error("[v0] Error configuring board:", error)
       alert("Failed to configure board. Please try again.")
     }
@@ -162,17 +97,10 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const handleRematch = async (reconfigureBoard: boolean) => {
     try {
       console.log("[v0] Starting rematch for room:", gameState.room.id, "reconfigureBoard:", reconfigureBoard)
-      const response = await fetch("/api/game/rematch", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId: gameState.room.id, reconfigureBoard }),
+      await rematch({
+        roomId: gameState.room.id as Id<"rooms">,
+        reconfigureBoard
       })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-        console.error("[v0] Rematch failed:", errorData)
-        throw new Error(errorData.error || "Failed to start rematch")
-      }
 
       console.log("[v0] Rematch successful")
       setCalledNumbers([])
@@ -181,9 +109,9 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
       if (reconfigureBoard) {
         setBoardConfigured(false)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[v0] Error starting rematch:", error)
-      alert(`Failed to start rematch: ${error instanceof Error ? error.message : "Please try again."}`)
+      alert(`Failed to start rematch: ${error.message || "Please try again."}`)
     }
   }
 

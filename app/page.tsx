@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { AvatarCarousel } from "@/components/avatar-carousel"
 import { PlayerCountSelector } from "@/components/player-count-selector"
 import { Users, LogIn, AlertCircle } from "lucide-react"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
 
 const DEFAULT_AVATAR = "🎮"
 
@@ -38,6 +40,9 @@ export default function HomePage() {
 
   const isNameValid = playerName.trim() && !nameError
 
+  const createRoom = useMutation(api.rooms.create)
+  const joinRoom = useMutation(api.rooms.join)
+
   const handleCreateRoom = async () => {
     if (!isNameValid) {
       setNameError("Please enter a valid name")
@@ -46,25 +51,15 @@ export default function HomePage() {
 
     setIsCreating(true)
     try {
-      const response = await fetch("/api/rooms/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          playerName: playerName.trim(),
-          playerAvatar,
-          maxPlayers: Number.parseInt(maxPlayers),
-        }),
+      const { roomCode } = await createRoom({
+        playerName: playerName.trim(),
+        playerAvatar,
+        maxPlayers: Number.parseInt(maxPlayers),
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        router.push(`/room/${data.roomCode}?player=player1`)
-      } else {
-        setNameError(data.error || "Failed to create room")
-      }
-    } catch (error) {
-      setNameError("Failed to create room. Please try again.")
+      router.push(`/room/${roomCode}?player=player1`)
+    } catch (error: any) {
+      setNameError(error.message || "Failed to create room")
     } finally {
       setIsCreating(false)
     }
@@ -83,25 +78,15 @@ export default function HomePage() {
 
     setIsJoining(true)
     try {
-      const response = await fetch("/api/rooms/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          roomCode: roomCode.trim().toUpperCase(),
-          playerName: playerName.trim(),
-          playerAvatar,
-        }),
+      const { roomCode: code, playerNumber } = await joinRoom({
+        roomCode: roomCode.trim().toUpperCase(),
+        playerName: playerName.trim(),
+        playerAvatar,
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        router.push(`/room/${roomCode.trim().toUpperCase()}?player=${data.playerNumber}`)
-      } else {
-        setNameError(data.error || "Failed to join room")
-      }
-    } catch (error) {
-      setNameError("Failed to join room. Please try again.")
+      router.push(`/room/${code}?player=${playerNumber}`)
+    } catch (error: any) {
+      setNameError(error.message || "Failed to join room")
     } finally {
       setIsJoining(false)
     }

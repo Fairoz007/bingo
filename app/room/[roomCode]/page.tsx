@@ -1,7 +1,11 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
 import { GameRoomClient } from "@/components/game-room-client"
 import { Card } from "@/components/ui/card"
+import { ConvexHttpClient } from "convex/browser"
+import { api } from "@/convex/_generated/api"
+import { Id } from "@/convex/_generated/dataModel"
+
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
 
 export default async function RoomPage({
   params,
@@ -12,7 +16,7 @@ export default async function RoomPage({
 }) {
   const { roomCode } = params
   const { player } = searchParams
-  
+
   const normalizedRoomCode = roomCode.toUpperCase()
   const currentPlayerParam = player?.toLowerCase()
 
@@ -22,24 +26,8 @@ export default async function RoomPage({
 
   const currentPlayer = currentPlayerParam as string
 
-  const supabase = await createClient()
-
-  const { data: room, error: roomError } = await supabase
-    .from("rooms")
-    .select("*")
-    .eq("room_code", normalizedRoomCode)
-    .maybeSingle()
-
-  if (roomError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="p-8 max-w-md">
-          <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Room</h2>
-          <p className="text-muted-foreground">Failed to load room data. Please try again.</p>
-        </Card>
-      </div>
-    )
-  }
+  // Fetch room
+  const room = await convex.query(api.rooms.getByCode, { roomCode: normalizedRoomCode })
 
   if (!room) {
     return (
@@ -52,25 +40,11 @@ export default async function RoomPage({
     )
   }
 
-  const { data: players, error: playersError } = await supabase
-    .from("players")
-    .select("*")
-    .eq("room_id", room.id)
-    .order("player_number")
-
-  if (playersError) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <Card className="p-8 max-w-md">
-          <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Players</h2>
-          <p className="text-muted-foreground">Failed to load player data. Please try again.</p>
-        </Card>
-      </div>
-    )
-  }
+  // Fetch players
+  const players = await convex.query(api.rooms.getPlayers, { roomId: room._id })
 
   const playerList = players || []
-  const isKnownPlayer = playerList.some((player) => player.player_number?.toLowerCase() === currentPlayer)
+  const isKnownPlayer = playerList.some((player: any) => player.player_number?.toLowerCase() === currentPlayer)
 
   if (!isKnownPlayer) {
     return (
@@ -85,10 +59,15 @@ export default async function RoomPage({
     )
   }
 
+  // Transform to match props interface where 'id' is expected
+  // We cast to any to satisfy TS for now, assuming GameRoomClient will handle the types or we update types
+  const roomWithId = { ...room, id: room._id }
+  const playersWithId = playerList.map((p: any) => ({ ...p, id: p._id }))
+
   return (
     <GameRoomClient
-      initialRoom={room}
-      initialPlayers={playerList}
+      initialRoom={roomWithId as any}
+      initialPlayers={playersWithId as any}
       roomCode={normalizedRoomCode}
       currentPlayer={currentPlayer}
     />
