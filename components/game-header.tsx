@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trophy, Users, Clock, Copy, Check, Star } from "lucide-react"
 import type { GameStatus, PlayerNumber, Player } from "@/lib/types"
 import { getCompletedLinesWithDetails } from "@/lib/game-utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -19,6 +19,7 @@ interface GameHeaderProps {
   allPlayers: Player[]
   gridSize: number
   playerCount: number
+  turnExpiresAt?: number
 }
 
 export function GameHeader({
@@ -31,10 +32,28 @@ export function GameHeader({
   allPlayers,
   gridSize,
   playerCount,
+  turnExpiresAt,
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
   const didIWin = winner === myPlayerNumber
+  const [timeLeft, setTimeLeft] = useState<number>(0)
+
+  useEffect(() => {
+    if (!turnExpiresAt || status !== "playing") {
+      setTimeLeft(0)
+      return
+    }
+
+    const updateTimer = () => {
+      const remaining = Math.max(0, Math.ceil((turnExpiresAt - Date.now()) / 1000))
+      setTimeLeft(remaining)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [turnExpiresAt, status])
 
   const myPlayer = allPlayers.find((p) => p.player_number === myPlayerNumber)
   const myLines = myPlayer
@@ -129,7 +148,16 @@ export function GameHeader({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-3"
                 >
+                  {timeLeft > 0 && (
+                    <div className={cn(
+                      "flex items-center justify-center w-12 h-12 rounded-full border-4 font-mono font-bold text-lg shadow-lg bg-white",
+                      timeLeft <= 10 ? "border-red-500 text-red-600 animate-pulse" : "border-emerald-500 text-emerald-700"
+                    )}>
+                      {timeLeft}
+                    </div>
+                  )}
                   <Badge
                     className={cn(
                       "text-sm md:text-base px-6 py-3 rounded-full transition-all duration-300 font-bold shadow-lg border",
@@ -313,6 +341,6 @@ export function GameHeader({
           </div>
         )}
       </Card>
-    </motion.div>
+    </motion.div >
   )
 }
