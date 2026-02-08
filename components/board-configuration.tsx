@@ -20,6 +20,7 @@ interface BoardConfigurationProps {
   players: Player[]
   maxPlayers: number
   onBoardConfigured: (board: number[]) => void
+  isSubmitting?: boolean
 }
 
 export function BoardConfiguration({
@@ -30,6 +31,7 @@ export function BoardConfiguration({
   players,
   maxPlayers,
   onBoardConfigured,
+  isSubmitting = false,
 }: BoardConfigurationProps) {
   const boardSize = gridSize * gridSize
   const [board, setBoard] = useState<(number | null)[]>(Array(boardSize).fill(null))
@@ -172,13 +174,13 @@ export function BoardConfiguration({
                     max={totalNumbers}
                     value={num ?? ""}
                     onChange={(e) => handleCellChange(index, e.target.value)}
-                    className={`text-center text-base md:text-lg font-bold h-12 md:h-14 transition-all duration-200 rounded-lg ${
-                      errors.has(index)
+                    disabled={isSubmitting}
+                    className={`text-center text-base md:text-lg font-bold h-12 md:h-14 transition-all duration-200 rounded-lg ${errors.has(index)
                         ? "border-2 border-red-500 bg-red-50 focus:border-red-600"
                         : num !== null
                           ? "border-2 border-emerald-500 bg-emerald-50 focus:border-emerald-600"
                           : "border-2 border-gray-300 hover:border-emerald-400 focus:border-emerald-500 focus:bg-emerald-50"
-                    }`}
+                      }`}
                     placeholder="—"
                   />
                 ))}
@@ -196,7 +198,7 @@ export function BoardConfiguration({
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 onClick={handleRandomize}
-                disabled={isRandomizing}
+                disabled={isRandomizing || isSubmitting}
                 variant="outline"
                 size="lg"
                 className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 h-12 bg-transparent"
@@ -207,6 +209,7 @@ export function BoardConfiguration({
 
               <Button
                 onClick={handleClearBoard}
+                disabled={isSubmitting}
                 variant="outline"
                 size="lg"
                 className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-12 bg-transparent"
@@ -217,12 +220,21 @@ export function BoardConfiguration({
 
               <Button
                 onClick={handleSubmit}
-                disabled={!isComplete}
+                disabled={!isComplete || isSubmitting}
                 size="lg"
                 className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-12"
               >
-                <Play className="w-5 h-5" />
-                {isComplete ? "Ready to Play" : `Fill ${boardSize - filledCount} more`}
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin mr-2">⏳</span>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    {isComplete ? "Ready to Play" : `Fill ${boardSize - filledCount} more`}
+                  </>
+                )}
               </Button>
             </div>
 

@@ -39,7 +39,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
     players: currentPlayers,
   }), [currentRoom, currentPlayers])
 
-  const [boardConfigured, setBoardConfigured] = useState(false)
+  const [isConfiguring, setIsConfiguring] = useState(false)
   const [isMarkingCell, setIsMarkingCell] = useState(false)
   const [calledNumbers, setCalledNumbers] = useState<number[]>([])
 
@@ -66,28 +66,28 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
     setCalledNumbers(allNumbers.sort((a, b) => a - b))
   }, [gameState.players])
 
-  useEffect(() => {
-    const gridSize = gameState.room.grid_size || 5
-    const expectedBoardSize = gridSize * gridSize
-    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+  const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+  const gridSize = gameState.room.grid_size || 5
+  const expectedBoardSize = gridSize * gridSize
 
-    if (myPlayer && Array.isArray(myPlayer.board) && myPlayer.board.length === expectedBoardSize) {
-      setBoardConfigured(true)
-    }
-  }, [gameState.players, currentPlayer, gameState.room.grid_size])
+  const isBoardConfigured = useMemo(() => {
+    return myPlayer && Array.isArray(myPlayer.board) && myPlayer.board.length === expectedBoardSize
+  }, [myPlayer, expectedBoardSize])
 
   const handleBoardConfigured = async (board: number[]) => {
+    setIsConfiguring(true)
     try {
       await configureBoard({
         roomId: gameState.room.id as Id<"rooms">,
         playerNumber: currentPlayer,
         board,
       })
-
-      setBoardConfigured(true)
+      // No need to set state locally, derived state handles it
     } catch (error: any) {
       console.error("[v0] Error configuring board:", error)
       alert("Failed to configure board. Please try again.")
+    } finally {
+      setIsConfiguring(false)
     }
   }
 
@@ -101,17 +101,14 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
       setCalledNumbers([])
       setIsMarkingCell(false)
 
-      if (reconfigureBoard) {
-        setBoardConfigured(false)
-      }
+      // No need to reset board configured state locally, server update will trigger it
     } catch (error: any) {
       console.error("[v0] Error starting rematch:", error)
       alert(`Failed to start rematch: ${error.message || "Please try again."}`)
     }
   }
 
-  if (!boardConfigured) {
-    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+  if (!isBoardConfigured) {
     return (
       <BoardConfiguration
         roomCode={roomCode}
@@ -121,12 +118,13 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
         players={gameState.players}
         maxPlayers={gameState.room.max_players}
         onBoardConfigured={handleBoardConfigured}
+        isSubmitting={isConfiguring}
       />
     )
   }
 
   if (gameState.room.status === "waiting") {
-    const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+
     return (
       <WaitingScreen
         room={gameState.room}
@@ -136,7 +134,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
     )
   }
 
-  const myPlayer = gameState.players.find((p) => p.player_number === currentPlayer)
+
   const sortedPlayers = [...gameState.players].sort((a, b) => a.join_order - b.join_order)
 
   if (!myPlayer) {
