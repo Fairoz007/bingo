@@ -104,6 +104,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
@@ -117,28 +118,36 @@
 
 /* Added custom animation utilities to replace tw-animate-css */
 @layer utilities {
+
   /* Slide animations */
   .slide-in-from-top-2 {
     animation: slide-in-from-top 0.2s ease-out;
   }
+
   .slide-in-from-bottom-2 {
     animation: slide-in-from-bottom 0.2s ease-out;
   }
+
   .slide-in-from-left-2 {
     animation: slide-in-from-left 0.2s ease-out;
   }
+
   .slide-in-from-right-2 {
     animation: slide-in-from-right 0.2s ease-out;
   }
+
   .slide-in-from-top-full {
     animation: slide-in-from-top-full 0.3s ease-out;
   }
+
   .slide-in-from-bottom-full {
     animation: slide-in-from-bottom-full 0.3s ease-out;
   }
+
   .slide-in-from-left-52 {
     animation: slide-in-from-left-52 0.3s ease-out;
   }
+
   .slide-in-from-right-52 {
     animation: slide-in-from-right-52 0.3s ease-out;
   }
@@ -146,21 +155,27 @@
   .slide-out-to-top {
     animation: slide-out-to-top 0.2s ease-in;
   }
+
   .slide-out-to-bottom {
     animation: slide-out-to-bottom 0.2s ease-in;
   }
+
   .slide-out-to-left {
     animation: slide-out-to-left 0.2s ease-in;
   }
+
   .slide-out-to-right {
     animation: slide-out-to-right 0.2s ease-in;
   }
+
   .slide-out-to-right-full {
     animation: slide-out-to-right-full 0.3s ease-in;
   }
+
   .slide-out-to-left-52 {
     animation: slide-out-to-left-52 0.3s ease-in;
   }
+
   .slide-out-to-right-52 {
     animation: slide-out-to-right-52 0.3s ease-in;
   }
@@ -169,15 +184,19 @@
   .fade-in {
     animation: fade-in 0.2s ease-out;
   }
+
   .fade-in-0 {
     animation: fade-in 0.15s ease-out;
   }
+
   .fade-out {
     animation: fade-out 0.2s ease-in;
   }
+
   .fade-out-0 {
     animation: fade-out 0.15s ease-in;
   }
+
   .fade-out-80 {
     animation: fade-out-80 0.2s ease-in;
   }
@@ -186,9 +205,11 @@
   .zoom-in-90 {
     animation: zoom-in-90 0.2s ease-out;
   }
+
   .zoom-in-95 {
     animation: zoom-in-95 0.2s ease-out;
   }
+
   .zoom-out-95 {
     animation: zoom-out-95 0.2s ease-in;
   }
@@ -197,6 +218,7 @@
   .animate-in {
     animation-fill-mode: forwards;
   }
+
   .animate-out {
     animation-fill-mode: forwards;
   }
@@ -208,6 +230,7 @@
     transform: translateY(-0.5rem);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -219,6 +242,7 @@
     transform: translateY(0.5rem);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -230,6 +254,7 @@
     transform: translateX(-0.5rem);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -241,6 +266,7 @@
     transform: translateX(0.5rem);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -251,6 +277,7 @@
   from {
     transform: translateY(-100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -260,6 +287,7 @@
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -269,6 +297,7 @@
   from {
     transform: translateX(-13rem);
   }
+
   to {
     transform: translateX(0);
   }
@@ -278,6 +307,7 @@
   from {
     transform: translateX(13rem);
   }
+
   to {
     transform: translateX(0);
   }
@@ -288,6 +318,7 @@
     transform: translateY(0);
     opacity: 1;
   }
+
   to {
     transform: translateY(-0.5rem);
     opacity: 0;
@@ -299,6 +330,7 @@
     transform: translateY(0);
     opacity: 1;
   }
+
   to {
     transform: translateY(0.5rem);
     opacity: 0;
@@ -310,6 +342,7 @@
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(-0.5rem);
     opacity: 0;
@@ -321,6 +354,7 @@
     transform: translateX(0);
     opacity: 1;
   }
+
   to {
     transform: translateX(0.5rem);
     opacity: 0;
@@ -331,6 +365,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(100%);
   }
@@ -340,6 +375,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(-13rem);
   }
@@ -349,6 +385,7 @@
   from {
     transform: translateX(0);
   }
+
   to {
     transform: translateX(13rem);
   }
@@ -358,6 +395,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -368,6 +406,7 @@
     transform: translateY(10px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -375,10 +414,12 @@
 }
 
 @keyframes pulse-subtle {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }
@@ -388,6 +429,7 @@
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0;
   }
@@ -397,6 +439,7 @@
   from {
     opacity: 1;
   }
+
   to {
     opacity: 0.2;
   }
@@ -407,6 +450,7 @@
     transform: scale(0.9);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -418,6 +462,7 @@
     transform: scale(0.95);
     opacity: 0;
   }
+
   to {
     transform: scale(1);
     opacity: 1;
@@ -429,6 +474,7 @@
     transform: scale(1);
     opacity: 1;
   }
+
   to {
     transform: scale(0.95);
     opacity: 0;
@@ -439,10 +485,12 @@
 /* Enhanced custom animations and added better visual effects */
 /* Removed glow animations and simplified to professional styles */
 @keyframes pulse-ring {
+
   0%,
   100% {
     box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4);
   }
+
   50% {
     box-shadow: 0 0 0 8px rgba(147, 51, 234, 0);
   }
@@ -452,6 +500,7 @@
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -461,16 +510,19 @@
   from {
     stroke-dashoffset: 100;
   }
+
   to {
     stroke-dashoffset: 0;
   }
 }
 
 @keyframes float {
+
   0%,
   100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-10px);
   }
@@ -478,10 +530,12 @@
 
 /* Added float-delayed animation for staggered effect */
 @keyframes float-delayed {
+
   0%,
   100% {
     transform: translateY(0px);
   }
+
   50% {
     transform: translateY(-8px);
   }
@@ -489,11 +543,13 @@
 
 /* Added pulse-slow animation for background elements */
 @keyframes pulse-slow {
+
   0%,
   100% {
     opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.5;
     transform: scale(1.05);
@@ -502,10 +558,12 @@
 
 /* Added shake animation for error states */
 @keyframes shake {
+
   0%,
   100% {
     transform: translateX(0);
   }
+
   10%,
   30%,
   50%,
@@ -513,6 +571,7 @@
   90% {
     transform: translateX(-5px);
   }
+
   20%,
   40%,
   60%,

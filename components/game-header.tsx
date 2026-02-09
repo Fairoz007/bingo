@@ -19,7 +19,7 @@ interface GameHeaderProps {
   allPlayers: Player[]
   gridSize: number
   playerCount: number
-
+  turnExpiresAt?: number
 }
 
 export function GameHeader({
@@ -32,6 +32,7 @@ export function GameHeader({
   allPlayers,
   gridSize,
   playerCount,
+  turnExpiresAt,
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
@@ -111,10 +112,17 @@ export function GameHeader({
                     transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                   />
                 )}
-                <span className={cn("w-2 h-2 rounded-full", isMyTurn ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
-                <span className="text-xs sm:text-sm font-bold truncate">
-                  {isMyTurn ? "YOUR TURN" : `${currentTurnPlayer?.player_name}'s Turn`}
-                </span>
+
+                <div className="flex items-center gap-2 z-10">
+                  <span className={cn("w-2 h-2 rounded-full", isMyTurn ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                  <span className="text-xs sm:text-sm font-bold truncate">
+                    {isMyTurn ? "YOUR TURN" : `${currentTurnPlayer?.player_name}'s Turn`}
+                  </span>
+
+                  {status === "playing" && turnExpiresAt && (
+                    <TurnTimer expiresAt={turnExpiresAt} />
+                  )}
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -273,5 +281,33 @@ export function GameHeader({
         </div>
       </Card>
     </motion.div>
+  )
+}
+
+function TurnTimer({ expiresAt }: { expiresAt: number }) {
+  const [timeLeft, setTimeLeft] = useState(0)
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = Date.now()
+      const remaining = Math.max(0, Math.ceil((expiresAt - now) / 1000))
+      setTimeLeft(remaining)
+    }
+
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+    return () => clearInterval(interval)
+  }, [expiresAt])
+
+  if (timeLeft <= 0) return null
+
+  return (
+    <div className={cn(
+      "flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-xs font-bold font-mono transition-colors",
+      timeLeft <= 10 ? "bg-red-100 text-red-600 animate-pulse" : "bg-emerald-100 text-emerald-600"
+    )}>
+      <Clock className="w-3 h-3" />
+      <span>{timeLeft}s</span>
+    </div>
   )
 }
