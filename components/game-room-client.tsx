@@ -154,12 +154,14 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
   const winnerName = winnerPlayer?.player_name || "Unknown"
 
   return (
-    <div className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-emerald-50 to-teal-50 relative selection:bg-emerald-200">
-      {/* Abstract Background Shapes */}
+    <div className="min-h-screen overflow-hidden bg-slate-50 relative selection:bg-emerald-200 font-sans">
+      {/* Premium Minimal Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-emerald-200/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] bg-teal-200/20 rounded-full blur-[100px] animate-pulse delay-1000" />
-        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] bg-blue-200/20 rounded-full blur-[100px] animate-pulse delay-2000" />
+        {/* Darker center anchor */}
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_30%,rgba(16,185,129,0.05),transparent_70%)]" />
+        <div className="absolute inset-0 bg-slate-50/80 mix-blend-overlay" />
+        <div className="absolute top-[10%] -left-[10%] w-[50rem] h-[50rem] bg-emerald-100/30 rounded-full blur-[120px] opacity-50 mix-blend-multiply" />
+        <div className="absolute bottom-[10%] -right-[10%] w-[50rem] h-[50rem] bg-teal-100/30 rounded-full blur-[120px] opacity-50 mix-blend-multiply" />
       </div>
 
       <motion.div
@@ -168,7 +170,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
         transition={{ duration: 0.8 }}
         className="relative h-screen flex flex-col overflow-y-auto pb-24 md:pb-6 scrollbar-hide"
       >
-        <div className="flex-1 w-full max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+        <div className="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 space-y-8">
           <GameHeader
             roomCode={roomCode}
             currentTurn={gameState.room.current_turn}
@@ -179,7 +181,7 @@ export function GameRoomClient({ initialRoom, initialPlayers, roomCode, currentP
             allPlayers={sortedPlayers}
             gridSize={gameState.room.grid_size || 5}
             playerCount={gameState.players.length}
-            turnExpiresAt={gameState.room.turn_expires_at}
+
           />
 
           <div className="flex justify-center px-2 sm:px-0 pb-10">

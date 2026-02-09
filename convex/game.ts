@@ -54,7 +54,7 @@ export const configureBoard = mutation({
             players.length === max_players &&
             players.every((p) => p.board && p.board.length === expectedBoardSize)
         ) {
-            const turnDuration = 60 * 1000;
+            const turnDuration = 30 * 1000;
             const turnExpiresAt = Date.now() + turnDuration;
 
             await ctx.db.patch(roomId, {
@@ -93,7 +93,7 @@ export const autoPassTurn = internalMutation({
 
         // Force pass turn
         const nextTurn = getNextPlayerTurn(expectedTurn, room.player_count);
-        const turnDuration = 60 * 1000;
+        const turnDuration = 30 * 1000;
         const nextTurnExpiresAt = Date.now() + turnDuration;
 
         await ctx.db.patch(roomId, {
@@ -186,7 +186,7 @@ export const mark = mutation({
         }
 
         const nextTurn = getNextPlayerTurn(playerNumber, allPlayers.length);
-        const turnDuration = 60 * 1000;
+        const turnDuration = 30 * 1000;
         const nextTurnExpiresAt = Date.now() + turnDuration;
 
         await ctx.db.patch(roomId, {
@@ -214,7 +214,7 @@ export const rematch = mutation({
     handler: async (ctx, args) => {
         const { roomId, reconfigureBoard } = args;
 
-        const turnDuration = 60 * 1000;
+        const turnDuration = 30 * 1000;
         const turnExpiresAt = Date.now() + turnDuration;
 
         await ctx.db.patch(roomId, {

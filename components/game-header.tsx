@@ -19,7 +19,7 @@ interface GameHeaderProps {
   allPlayers: Player[]
   gridSize: number
   playerCount: number
-  turnExpiresAt?: number
+
 }
 
 export function GameHeader({
@@ -32,28 +32,11 @@ export function GameHeader({
   allPlayers,
   gridSize,
   playerCount,
-  turnExpiresAt,
 }: GameHeaderProps) {
   const [copied, setCopied] = useState(false)
   const isMyTurn = currentTurn === myPlayerNumber
   const didIWin = winner === myPlayerNumber
-  const [timeLeft, setTimeLeft] = useState<number>(0)
 
-  useEffect(() => {
-    if (!turnExpiresAt || status !== "playing") {
-      setTimeLeft(0)
-      return
-    }
-
-    const updateTimer = () => {
-      const remaining = Math.max(0, Math.ceil((turnExpiresAt - Date.now()) / 1000))
-      setTimeLeft(remaining)
-    }
-
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-    return () => clearInterval(interval)
-  }, [turnExpiresAt, status])
 
   const myPlayer = allPlayers.find((p) => p.player_number === myPlayerNumber)
   const myLines = myPlayer
@@ -72,149 +55,97 @@ export function GameHeader({
     <motion.div
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4"
+      transition={{ duration: 0.5, ease: "easeOut" }}
+      className="w-full max-w-xl mx-auto space-y-6 select-none"
     >
-      <Card className="p-4 md:p-6 shadow-xl border-0 bg-white/80 backdrop-blur-md relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-100/50 to-transparent blur-2xl -z-10" />
+      {/* Top Bar: Room Status & Turn Indicator */}
+      <div className="flex items-stretch justify-between gap-3 px-1">
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          {/* Room Code Section */}
-          <div className="flex items-center gap-4 w-full sm:w-auto p-3 rounded-2xl bg-white/50 border border-white/60 shadow-sm">
-            <div className="bg-gradient-to-br from-emerald-500 to-teal-600 p-3 rounded-xl shadow-lg shadow-emerald-200">
-              <Users className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-0.5">Room Code</p>
-              <div className="flex items-center gap-3">
-                <p className="text-xl md:text-2xl font-black text-slate-800 tracking-widest font-mono">{roomCode}</p>
-                <div className="h-6 w-px bg-emerald-200 mx-1" />
-                <button
-                  onClick={handleCopyRoomCode}
-                  className="p-2 hover:bg-emerald-100 rounded-lg transition-all active:scale-95 group"
-                  title="Copy room code"
-                >
-                  <AnimatePresence mode="wait">
-                    {copied ? (
-                      <motion.div
-                        key="check"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        <Check className="h-4 w-4 text-emerald-600" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="copy"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                      >
-                        <Copy className="h-4 w-4 text-slate-400 group-hover:text-emerald-600 transition-colors" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Room & Turn - Merged Compact Bar */}
+        <div className="flex-1 flex items-center bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 p-1.5 gap-2 overflow-hidden relative">
 
-          {/* Turn Status Badge */}
-          <div className="flex items-center justify-center w-full sm:w-auto">
-            <AnimatePresence mode="wait">
-              {status === "finished" && winner ? (
-                <motion.div
-                  key="winner"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                >
-                  <Badge
-                    className={cn(
-                      "text-sm md:text-base px-6 py-3 rounded-full font-bold shadow-lg animate-pulse",
-                      didIWin
-                        ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white border-amber-300"
-                        : "bg-slate-200 text-slate-700 border-slate-300",
-                    )}
-                  >
-                    <Trophy className="mr-2 h-5 w-5" />
-                    {didIWin ? "You Won! 🎉" : `${allPlayers.find((p) => p.player_number === winner)?.player_name} Won! 🏆`}
-                  </Badge>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="turn"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex items-center gap-3"
-                >
-                  {timeLeft > 0 && (
-                    <div className={cn(
-                      "flex items-center justify-center w-12 h-12 rounded-full border-4 font-mono font-bold text-lg shadow-lg bg-white",
-                      timeLeft <= 10 ? "border-red-500 text-red-600 animate-pulse" : "border-emerald-500 text-emerald-700"
-                    )}>
-                      {timeLeft}
-                    </div>
-                  )}
-                  <Badge
-                    className={cn(
-                      "text-sm md:text-base px-6 py-3 rounded-full transition-all duration-300 font-bold shadow-lg border",
-                      isMyTurn
-                        ? "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-400 shadow-emerald-200"
-                        : "bg-white text-slate-600 border-slate-200",
-                    )}
-                  >
-                    <Clock className={cn("mr-2 h-5 w-5", isMyTurn && "animate-spin-slow")} />
-                    {isMyTurn ? "It's Your Turn!" : `${currentTurnPlayer?.player_name}'s Turn`}
-                  </Badge>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* Room Code Pill */}
+          <motion.button
+            onClick={handleCopyRoomCode}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 px-3 py-2 bg-slate-100/80 rounded-xl hover:bg-emerald-50 text-slate-500 hover:text-emerald-700 transition-colors group"
+            title="Copy Room Code"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            <span className="text-xs font-bold font-mono tracking-wider">{roomCode}</span>
+          </motion.button>
+
+          <div className="w-px h-6 bg-slate-200" />
+
+          {/* Turn Status - The focus point */}
+          <AnimatePresence mode="wait">
+            {status === "finished" && winner ? (
+              <motion.div
+                key="winner"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex-1 flex items-center justify-center gap-2 text-amber-600 font-bold text-sm px-2 truncate"
+              >
+                <Trophy className="w-4 h-4" />
+                <span className="truncate">{didIWin ? "You Won!" : `${allPlayers.find(p => p.player_number === winner)?.player_name.split(' ')[0]} Won!`}</span>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="turn"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl transition-all duration-500 relative overflow-hidden",
+                  isMyTurn
+                    ? "bg-emerald-100/50 text-emerald-800"
+                    : "text-slate-500"
+                )}
+              >
+                {isMyTurn && (
+                  <motion.div
+                    layoutId="turn-highlight"
+                    className="absolute inset-0 rounded-xl border border-emerald-500/30"
+                    animate={{ boxShadow: ["0 0 0 0px rgba(16,185,129,0)", "0 0 0 4px rgba(16,185,129,0.1)", "0 0 0 0px rgba(16,185,129,0)"] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                )}
+                <span className={cn("w-2 h-2 rounded-full", isMyTurn ? "bg-emerald-500 animate-pulse" : "bg-slate-300")} />
+                <span className="text-xs sm:text-sm font-bold truncate">
+                  {isMyTurn ? "YOUR TURN" : `${currentTurnPlayer?.player_name}'s Turn`}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Players Section */}
-        <div className="mt-6 pt-6 border-t border-slate-100 relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest">
-            Active Players
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3">
+        {/* Active Player Avatars - Compact Stack */}
+        <div className="flex bg-white/70 backdrop-blur-md rounded-2xl shadow-sm border border-white/50 p-1.5">
+          <div className="flex items-center -space-x-2">
             {allPlayers.map((player) => {
-              const isCurrentPlayer = player.player_number === myPlayerNumber
-              const isCurrentTurn = player.player_number === currentTurn
+              const isTurn = player.player_number === currentTurn
               return (
                 <motion.div
-                  layout
                   key={player.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{
-                    opacity: 1,
-                    scale: 1,
-                    y: isCurrentTurn ? -4 : 0,
-                    boxShadow: isCurrentTurn ? "0 10px 25px -5px rgba(16, 185, 129, 0.3)" : "none"
-                  }}
+                  layout
                   className={cn(
-                    "flex items-center gap-3 px-4 py-2 rounded-2xl transition-all duration-300 border",
-                    isCurrentTurn
-                      ? "bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200 text-emerald-900 ring-2 ring-emerald-500 ring-offset-2"
-                      : "bg-slate-50 border-slate-100 text-slate-600 hover:bg-slate-100",
-                    isCurrentPlayer && "font-bold pr-5",
+                    "relative w-9 h-9 rounded-full border-2 border-white flex items-center justify-center shadow-sm overflow-hidden transition-all duration-300",
+                    isTurn ? "z-10 bg-emerald-50 ring-2 ring-emerald-400 ring-offset-2 scale-105" : "bg-slate-100 grayscale-[0.3]"
                   )}
+                  title={player.player_name}
                 >
-                  <div className="bg-white rounded-full p-1 shadow-sm text-lg sm:text-xl">
-                    {player.player_avatar || "👤"}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="leading-none">{player.player_name}</span>
-                    {isCurrentPlayer && <span className="text-[10px] text-emerald-600 font-bold leading-tight mt-0.5">YOU</span>}
-                  </div>
-                  {isCurrentTurn && (
+                  <span className="text-xs">{player.player_avatar || "👤"}</span>
+                  {/* Online dot - assuming active = online */}
+                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full translate-x-0.5 translate-y-0.5 z-20" />
+
+                  {/* Active Ring Animation */}
+                  {isTurn && (
                     <motion.div
-                      layoutId="turn-indicator"
-                      className="w-2 h-2 rounded-full bg-emerald-500 ml-2 animate-pulse"
+                      className="absolute inset-0 rounded-full border border-emerald-400"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                      style={{ borderTopColor: 'transparent', borderLeftColor: 'transparent' }}
                     />
                   )}
                 </motion.div>
@@ -222,125 +153,125 @@ export function GameHeader({
             })}
           </div>
         </div>
+      </div>
 
-        {/* BINGO Progress Section */}
-        <div className="mt-6 pt-6 border-t border-slate-100">
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">
-              Your Progress
-            </p>
-            <div className="text-xs font-bold px-2 py-1 bg-slate-100 rounded text-slate-600">
-              {myLines.completedCount} / {gridSize} Lines
-            </div>
-          </div>
+      {/* Main Stats & Progress Card */}
+      <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-xl rounded-[1.5rem] overflow-hidden relative">
+        {/* Subtle decorative gradient */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50/40 rounded-full blur-3xl -z-10 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
 
-          <div className="flex justify-center gap-2 sm:gap-4 perspective-1000">
-            {["B", "I", "N", "G", "O", ...Array(Math.max(0, (playerCount || 2) - 2)).fill("O")].map((letter, index) => {
-              const completedLine = myLines.completedLines[index]
-              const isCompleted = index < myLines.completedCount
+        <div className="p-5 sm:p-6 space-y-6">
 
-              // Vibrant distinct colors for each letter
-              const colors = [
-                'from-red-500 to-rose-600 shadow-red-200',
-                'from-blue-500 to-indigo-600 shadow-blue-200',
-                'from-green-500 to-emerald-600 shadow-green-200',
-                'from-yellow-400 to-orange-500 shadow-orange-200',
-                'from-purple-500 to-violet-600 shadow-purple-200',
-              ]
-
-              const colorClass = colors[index % colors.length]
-              const isLastCompleted = index === myLines.completedCount - 1 && isCompleted
-
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ rotateX: 0 }}
-                  animate={{
-                    rotateX: isCompleted ? 360 : 0,
-                    scale: isCompleted ? 1.1 : 1,
-                    y: isCompleted ? -5 : 0
-                  }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 260,
-                    damping: 20,
-                    delay: isCompleted ? index * 0.1 : 0
-                  }}
-                  className={cn(
-                    "w-12 h-14 sm:w-14 sm:h-16 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-black transition-all duration-300 shadow-lg border-b-4",
-                    isCompleted
-                      ? `bg-gradient-to-b ${colorClass} text-white border-black/20`
-                      : "bg-slate-100 text-slate-300 border-slate-200"
-                  )}
-                  title={isCompleted ? `Line Verified!` : "Needs completion"}
-                >
-                  {letter}
-                  {isCompleted && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.2 + (index * 0.1) }}
-                      className="absolute -top-2 -right-2 bg-white text-emerald-600 rounded-full p-0.5 shadow-sm"
-                    >
-                      <Star className="w-3 h-3 fill-current" />
-                    </motion.div>
-                  )}
-                </motion.div>
-              )
-            })}
-          </div>
-
-          <AnimatePresence>
-            {myLines.completedCount >= gridSize && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1.1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                className="text-center mt-6"
-              >
-                <div className="inline-block px-8 py-2 rounded-full bg-gradient-to-r from-amber-300 to-yellow-500 text-white font-black text-2xl shadow-xl shadow-amber-200 animate-bounce">
-                  ✨ BINGO! ✨
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Called Numbers Ticker */}
-        {calledNumbers.length > 0 && (
-          <div className="mt-6 pt-6 border-t border-slate-100">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Live Calls ({calledNumbers.length})</p>
+          {/* Bingo Progress Section */}
+          <div className="space-y-4">
+            <div className="flex items-end justify-between px-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Complete Lines</span>
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full leading-none">
+                {myLines.completedCount} / {gridSize}
+              </span>
             </div>
 
-            <div className="relative">
-              <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10" />
-              <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10" />
+            <div className="flex justify-between gap-2 sm:gap-3">
+              {["B", "I", "N", "G", "O", ...Array(Math.max(0, (playerCount || 2) - 2)).fill("O")].map((letter, index) => {
+                const isCompleted = index < myLines.completedCount
 
-              <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide px-4 mask-image-linear-gradient">
-                <AnimatePresence initial={false}>
-                  {[...calledNumbers].reverse().map((num, i) => (
+                // Gradient definitions for completed states
+                const gradients = [
+                  'bg-gradient-to-br from-red-500 to-rose-600',
+                  'bg-gradient-to-br from-blue-500 to-indigo-600',
+                  'bg-gradient-to-br from-emerald-500 to-green-600',
+                  'bg-gradient-to-br from-amber-400 to-orange-500',
+                  'bg-gradient-to-br from-purple-500 to-violet-600',
+                ]
+                const activeGradient = gradients[index % gradients.length]
+
+                return (
+                  <div key={index} className="flex-1 relative group">
                     <motion.div
-                      key={num}
-                      initial={{ opacity: 0, x: -20, scale: 0.5 }}
-                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      animate={{
+                        y: isCompleted ? -2 : 0,
+                        scale: isCompleted ? 1.05 : 1
+                      }}
                       className={cn(
-                        "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-mono text-sm font-bold border shadow-sm",
-                        i === 0
-                          ? "bg-slate-900 text-white border-slate-800 scale-110 ring-2 ring-slate-200 ring-offset-2"
-                          : "bg-slate-50 text-slate-500 border-slate-200"
+                        "aspect-[3/4] sm:aspect-square rounded-xl flex items-center justify-center relative overflow-hidden transition-all duration-500 shadow-sm",
+                        isCompleted
+                          ? cn(activeGradient, "text-white shadow-md shadow-emerald-200/50")
+                          : "bg-slate-50/50 text-slate-300 border border-dashed border-slate-200"
                       )}
                     >
-                      {num}
+                      <span className="text-lg sm:text-xl font-black">{letter}</span>
+
+                      {/* Shine effect for completed */}
+                      {isCompleted && (
+                        <motion.div
+                          initial={{ x: '-100%' }}
+                          animate={{ x: '200%' }}
+                          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3, ease: 'linear' }}
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
+                        />
+                      )}
                     </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
+
+                    {/* Connection line between nodes (visual decoration only - simple implementation) */}
+                    {index < (playerCount || 2) + 2 && (
+                      <div className={cn(
+                        "absolute top-1/2 -right-2 sm:-right-3 w-2 sm:w-3 h-0.5 -translate-y-1/2 z-0",
+                        index < myLines.completedCount - 1 ? "bg-emerald-200" : "bg-transparent"
+                      )} />
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
-        )}
+
+          {/* Live Calls Strip */}
+          {calledNumbers.length > 0 && (
+            <div className="pt-6 border-t border-slate-100/80">
+              <div className="flex items-center justify-between px-1 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Called</span>
+                </div>
+              </div>
+
+              <div className="relative h-16 overflow-hidden mask-image-linear-gradient flex items-center">
+                <div className="absolute left-0 z-10 w-12 h-full bg-gradient-to-r from-white to-transparent" />
+                <div className="absolute right-0 z-10 w-12 h-full bg-gradient-to-l from-white to-transparent" />
+
+                <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide px-6 w-full py-2">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {[...calledNumbers].reverse().map((num, i) => (
+                      <motion.div
+                        key={`${num}-${i}`}
+                        layout
+                        initial={{ opacity: 0, scale: 0.5, x: -20 }}
+                        animate={{
+                          opacity: i === 0 ? 1 : 0.6 - (i * 0.1),
+                          scale: i === 0 ? 1 : 0.85,
+                          x: 0
+                        }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        className={cn(
+                          "flex-shrink-0 flex items-center justify-center font-mono font-bold rounded-2xl shadow-sm transition-all duration-300",
+                          i === 0
+                            ? "w-12 h-12 bg-slate-800 text-white text-lg shadow-lg ring-4 ring-white"
+                            : "w-10 h-10 bg-slate-100 text-slate-500 text-sm"
+                        )}
+                      >
+                        {num}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Card>
-    </motion.div >
+    </motion.div>
   )
 }

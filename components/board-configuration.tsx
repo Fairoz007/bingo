@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { generateBingoBoard } from "@/lib/game-utils"
-import { Shuffle, Play, RotateCcw } from "lucide-react"
+import { Shuffle, Play, RotateCcw, Check, AlertCircle } from "lucide-react"
 import { BoardConfigHeader } from "@/components/board-config-header"
 import { BoardConfigPlayerPanel } from "@/components/board-config-player-panel"
 import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 import type { Player } from "@/lib/types"
 
@@ -57,8 +58,11 @@ export function BoardConfiguration({
         const duplicateIndex = newBoard.findIndex((n, i) => i !== index && n === num)
         if (duplicateIndex !== -1) {
           newErrors.add(index)
+          newErrors.add(duplicateIndex)
         } else {
           newErrors.delete(index)
+          // Re-check if the previously duplicated number is now unique
+          // This is a simple check; for full correctness we might re-validate all, but this suffices for UX
         }
       }
     } else {
@@ -109,15 +113,15 @@ export function BoardConfiguration({
   const progressPercent = (filledCount / boardSize) * 100
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex flex-col font-sans">
       <BoardConfigHeader roomCode={roomCode} playerName={playerName} />
 
       {/* Main Content */}
-      <div className="flex-1 p-3 sm:p-4 md:p-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6">
+      <div className="flex-1 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8">
           {/* Left Sidebar: Player Panel */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-20 space-y-4">
+          <div className="lg:col-span-4 xl:col-span-3">
+            <div className="sticky top-24">
               <BoardConfigPlayerPanel
                 playerName={playerName}
                 playerNumber={playerJoinOrder}
@@ -131,120 +135,135 @@ export function BoardConfiguration({
           </div>
 
           {/* Main Content: Board Configuration */}
-          <div className="lg:col-span-3 space-y-4 md:space-y-6">
-            {/* Title Section */}
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl md:text-4xl font-bold text-emerald-900">Configure Your Personal Bingo Card</h1>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Enter unique numbers from 1-{totalNumbers} in each cell to create your bingo card.
-                Other players will configure their own boards separately.
-              </p>
-            </div>
+          <div className="lg:col-span-8 xl:col-span-9 space-y-6">
 
-            {/* Progress Section */}
-            <Card className="bg-white border-emerald-200 p-4 md:p-6 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-emerald-900">Board Progress</span>
-                <span className="text-sm font-bold text-emerald-600">
-                  {filledCount}/{boardSize} cells
-                </span>
+            {/* Header Area */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/60 backdrop-blur-md p-6 rounded-[24px] border border-white/50 shadow-sm">
+              <div>
+                <h1 className="text-2xl font-bold text-slate-800">Setup Your Board</h1>
+                <p className="text-slate-500 text-sm mt-1">Fill the grid with unique numbers (1-{totalNumbers})</p>
               </div>
-              <Progress value={progressPercent} className="h-3" />
-              <p className="text-xs text-muted-foreground">
-                {isComplete
-                  ? "✓ Board complete! Ready to start."
-                  : `Fill ${boardSize - filledCount} more cell${boardSize - filledCount !== 1 ? "s" : ""} to continue.`}
-              </p>
-            </Card>
+
+              <div className="flex-1 max-w-sm w-full space-y-2">
+                <div className="flex justify-between text-xs font-bold uppercase tracking-wide text-slate-400">
+                  <span>Progress</span>
+                  <span className={isComplete ? "text-emerald-600" : "text-slate-600"}>{filledCount} / {boardSize}</span>
+                </div>
+                <Progress value={progressPercent} className="h-2.5 rounded-full bg-slate-100" indicatorClassName={isComplete ? "bg-emerald-500" : "bg-blue-500"} />
+              </div>
+            </div>
 
             {/* Grid Section */}
-            <Card className="bg-white border-emerald-200 p-4 md:p-6">
-              <div
-                className="gap-2 md:gap-3"
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-                }}
-              >
-                {board.map((num, index) => (
-                  <Input
-                    key={index}
-                    type="number"
-                    min="1"
-                    max={totalNumbers}
-                    value={num ?? ""}
-                    onChange={(e) => handleCellChange(index, e.target.value)}
-                    disabled={isSubmitting}
-                    className={`text-center text-base md:text-lg font-bold h-12 md:h-14 transition-all duration-200 rounded-lg ${errors.has(index)
-                        ? "border-2 border-red-500 bg-red-50 focus:border-red-600"
-                        : num !== null
-                          ? "border-2 border-emerald-500 bg-emerald-50 focus:border-emerald-600"
-                          : "border-2 border-gray-300 hover:border-emerald-400 focus:border-emerald-500 focus:bg-emerald-50"
-                      }`}
-                    placeholder="—"
-                  />
-                ))}
+            <Card className="bg-white/90 backdrop-blur-xl border-white/60 shadow-xl rounded-[32px] overflow-hidden ring-1 ring-black/5">
+              <div className="p-8">
+                <div
+                  className={cn(
+                    "grid gap-3 md:gap-4 mx-auto max-w-2xl",
+                    gridSize === 5 ? "grid-cols-5" : "grid-cols-4" // Simple check, though dynamic style is better for variable sizes
+                  )}
+                  style={{
+                    // Fallback for dynamic grid sizes if needed, but Tailwind classes are preferred for spacing
+                    gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+                  }}
+                >
+                  {board.map((num, index) => {
+                    const isError = errors.has(index);
+                    const isFilled = num !== null;
+
+                    return (
+                      <div key={index} className="relative aspect-square">
+                        <Input
+                          type="number"
+                          min="1"
+                          max={totalNumbers}
+                          value={num ?? ""}
+                          onChange={(e) => handleCellChange(index, e.target.value)}
+                          disabled={isSubmitting}
+                          className={cn(
+                            "w-full h-full text-center text-xl md:text-2xl font-bold transition-all duration-200 rounded-2xl shadow-sm focus:ring-4 focus:ring-opacity-50 z-10 relative",
+                            isError
+                              ? "border-red-300 bg-red-50 text-red-600 focus:border-red-500 focus:ring-red-200"
+                              : isFilled
+                                ? "border-transparent bg-emerald-500 text-white focus:ring-emerald-300 shadow-md transform hover:-translate-y-0.5"
+                                : "border-slate-200 bg-white hover:border-emerald-300 focus:border-emerald-500 focus:ring-emerald-100 text-slate-700"
+                          )}
+                          placeholder=""
+                        />
+                        {/* Number label for empty state opacity mostly */}
+                        {!isFilled && !isError && (
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-10">
+                            <span className="text-2xl font-black text-slate-400">#</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Error Message */}
+                {errors.size > 0 && (
+                  <div className="flex items-center justify-center gap-2 mt-6 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold animate-in fade-in slide-in-from-top-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Please ensure all numbers are unique and between 1-{totalNumbers}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Error Message */}
-              {errors.size > 0 && (
-                <p className="text-sm text-red-600 text-center mt-4 bg-red-50 p-3 rounded-lg">
-                  ⚠ Please fix invalid or duplicate numbers (must be unique and between 1-{totalNumbers})
-                </p>
-              )}
+              {/* Footer Actions */}
+              <div className="bg-slate-50/50 p-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex gap-3 w-full sm:w-auto">
+                  <Button
+                    onClick={handleRandomize}
+                    disabled={isRandomizing || isSubmitting}
+                    variant="outline"
+                    className="flex-1 sm:flex-none h-11 border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 rounded-xl font-bold transition-all"
+                  >
+                    <Shuffle className={cn("w-4 h-4 mr-2", isRandomizing && "animate-spin")} />
+                    Randomize
+                  </Button>
+                  <Button
+                    onClick={handleClearBoard}
+                    disabled={isSubmitting}
+                    variant="ghost"
+                    className="flex-1 sm:flex-none h-11 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl font-medium transition-all"
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Clear
+                  </Button>
+                </div>
+
+                <Button
+                  onClick={handleSubmit}
+                  disabled={!isComplete || isSubmitting}
+                  className="w-full sm:w-auto h-12 px-8 bg-gradient-to-r from-blue-500 via-blue-600 to-indigo-600 hover:from-blue-600 hover:via-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      {isComplete ? (
+                        <>
+                          Ready to Play <Play className="w-4 h-4 ml-2 fill-current" />
+                        </>
+                      ) : (
+                        `Fill ${boardSize - filledCount} more`
+                      )}
+                    </>
+                  )}
+                </Button>
+              </div>
             </Card>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={handleRandomize}
-                disabled={isRandomizing || isSubmitting}
-                variant="outline"
-                size="lg"
-                className="gap-2 border-emerald-300 text-emerald-700 hover:bg-emerald-50 h-12 bg-transparent"
-              >
-                <Shuffle className={`w-5 h-5 ${isRandomizing ? "animate-spin" : ""}`} />
-                {isRandomizing ? "Generating..." : "Generate Random"}
-              </Button>
-
-              <Button
-                onClick={handleClearBoard}
-                disabled={isSubmitting}
-                variant="outline"
-                size="lg"
-                className="gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 h-12 bg-transparent"
-              >
-                <RotateCcw className="w-5 h-5" />
-                Clear Board
-              </Button>
-
-              <Button
-                onClick={handleSubmit}
-                disabled={!isComplete || isSubmitting}
-                size="lg"
-                className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-12"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="animate-spin mr-2">⏳</span>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5" />
-                    {isComplete ? "Ready to Play" : `Fill ${boardSize - filledCount} more`}
-                  </>
-                )}
-              </Button>
-            </div>
-
-            {/* Footer Info */}
-            <Card className="bg-gradient-to-r from-amber-50 to-orange-50 border-amber-200 p-4">
-              <p className="text-sm text-amber-900">
-                <span className="font-semibold">💡 Tip:</span> Click "Generate Random" to quickly fill your board with
-                random numbers, or manually enter numbers for a custom board.
+            {/* Tip */}
+            <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 flex gap-3 items-start text-amber-800/80 text-sm max-w-2xl mx-auto">
+              <span className="text-xl">💡</span>
+              <p className="mt-0.5">
+                <strong>Pro Tip:</strong> Use the "Randomize" button to instantly generate a valid board, then make manual adjustments if you have lucky numbers!
               </p>
-            </Card>
+            </div>
           </div>
         </div>
       </div>

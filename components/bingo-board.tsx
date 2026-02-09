@@ -101,84 +101,105 @@ export function BingoBoard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      className="w-full max-w-2xl"
+      className="w-full max-w-xl mx-auto px-1"
     >
-      <Card
-        className={cn(
-          "shadow-2xl transition-all duration-500 border-0 overflow-hidden relative backdrop-blur-xl",
-          isMyBoard && isMyTurn && gameStatus === "playing"
-            ? "ring-4 ring-emerald-400/50 bg-white/90"
-            : "bg-white/80",
-          hasWinningLine && "ring-4 ring-amber-400/50 bg-amber-50/90"
-        )}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-white via-transparent to-transparent opacity-50 pointer-events-none" />
+      <div className={cn(
+        "relative rounded-[2rem] overflow-hidden transition-all duration-500",
+        isMyBoard && isMyTurn && gameStatus === "playing"
+          ? "bg-white shadow-[0_20px_50px_-12px_rgba(16,185,129,0.25)] ring-1 ring-emerald-500/30"
+          : "bg-white/80 shadow-2xl shadow-slate-200/50 border border-white/60",
+        hasWinningLine && "ring-4 ring-amber-300 shadow-amber-200/50"
+      )}>
 
-        <CardHeader className={cn(
-          "pb-4 border-b px-6 relative z-10",
-          isMyBoard ? "bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-emerald-100" : "bg-slate-50 border-slate-100"
-        )}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3 justify-center sm:justify-start">
-              <div className={cn(
-                "p-2 rounded-xl shadow-lg transition-transform hover:scale-105",
-                isMyBoard
-                  ? "bg-gradient-to-br from-emerald-400 to-teal-600 text-white"
-                  : "bg-slate-200 text-slate-500"
-              )}>
-                <User className="h-5 w-5" />
-              </div>
-              <div className="text-center sm:text-left">
-                <CardTitle className="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
-                  {player.player_name}
-                  {hasWinningLine && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                    >
-                      <Crown className="h-5 w-5 text-amber-500 fill-amber-500" />
-                    </motion.span>
-                  )}
-                </CardTitle>
-                <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-                  {isMyBoard ? "You" : "Opponent"}
-                  {isMyTurn && gameStatus === "playing" && (
-                    <span className="text-emerald-600 flex items-center gap-1 animate-pulse">
-                      • Active Turn
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-center sm:justify-end">
-              {isMyBoard ? (
-                <div className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold shadow-sm border border-emerald-200">
-                  Your Board
-                </div>
-              ) : (
-                <div className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold flex items-center gap-1.5 shadow-sm border border-slate-200">
-                  <Eye className="h-3 w-3" />
-                  Observing
-                </div>
+        {/* Header Section - Slightly darker bg for hierarchy */}
+        <div className="relative z-10 flex items-center justify-between p-5 sm:p-6 bg-slate-50/50 border-b border-slate-100/80">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "relative w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm transition-transform hover:scale-105",
+              isMyBoard
+                ? "bg-emerald-100 text-emerald-600"
+                : "bg-slate-100 text-slate-400"
+            )}>
+              <User className="w-6 h-6" />
+              {hasWinningLine && (
+                <motion.div
+                  initial={{ scale: 0, rotate: -45 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  className="absolute -top-2 -left-2 bg-amber-400 text-white p-1 rounded-full shadow-md"
+                >
+                  <Crown className="w-3.5 h-3.5 fill-current" />
+                </motion.div>
               )}
             </div>
-          </div>
-        </CardHeader>
 
-        <CardContent className="pt-6 px-4 sm:px-6 pb-6 relative z-10">
+            <div className="flex flex-col">
+              <h3 className="text-lg sm:text-xl font-black text-slate-800 tracking-tight leading-tight">
+                {player.player_name}
+              </h3>
+              <div className="flex items-center gap-2 mt-0.5">
+                {isMyBoard ? (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-500 uppercase tracking-wide shadow-sm">YOU</span>
+                ) : (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-400 uppercase tracking-wide">Opponent</span>
+                )}
+                {isMyTurn && gameStatus === "playing" && (
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <AnimatePresence>
+              {timeLeft > 0 && gameStatus === "playing" && (
+                <div className="flex flex-col items-center">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 rounded-full font-mono font-bold text-base shadow-sm bg-white border relative overflow-hidden",
+                      timeLeft <= 10 ? "text-red-500 border-red-100" : "text-emerald-600 border-emerald-100"
+                    )}
+                  >
+                    <span className="relative z-10">{timeLeft}</span>
+                    <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
+                      <circle
+                        cx="20" cy="20" r="18"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                        strokeDasharray="113"
+                        strokeDashoffset={113 * (1 - timeLeft / 30)}
+                        className={cn("opacity-10 transition-all duration-1000 linear")}
+                      />
+                    </svg>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Grid Section - Inner shadow container */}
+        <div className="p-4 sm:p-6 bg-white relative">
+          {/* Subtle inner shadow for depth */}
+          <div className="absolute inset-0 pointer-events-none shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]" />
+
           <div
-            className={cn("grid place-items-stretch", gapClass)}
+            className={cn("relative z-10 grid place-items-stretch", gapClass)}
             style={{
               display: "grid",
               gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
             }}
           >
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {player.board.map((number, index) => {
                 const isMarked = markedSet.has(index)
                 const isClickable = isMyBoard && isMyTurn && !isMarked && gameStatus === "playing" && !isMarkingCell
@@ -186,98 +207,77 @@ export function BingoBoard({
                 return (
                   <motion.button
                     key={`${index}-${number}`}
-                    initial={{ opacity: 0, scale: 0.5 }}
+                    layout
+                    initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{
-                      delay: index * 0.01,
-                      type: "spring",
-                      stiffness: 260,
-                      damping: 20
-                    }}
-                    whileHover={isClickable ? { scale: 1.05, y: -2 } : {}}
-                    whileTap={isClickable ? { scale: 0.95 } : {}}
-                    onClick={() => handleCellClick(index)}
-                    disabled={!isClickable && !isMarked} // Allow clicking marked/unmarked for potential inspect logic if needed, but standard rules apply
+                    whileHover={isClickable ? {
+                      y: -3,
+                      boxShadow: "0 8px 20px -4px rgba(16,185,129,0.15)",
+                      scale: 1.02
+                    } : {}}
+                    whileTap={isClickable ? { scale: 0.94 } : {}}
+                    onClick={() => handleCellClick(index)} // Corrected onClick handler
+                    disabled={!isClickable && !isMarked}
                     className={cn(
-                      "aspect-square rounded-xl flex items-center justify-center relative overflow-hidden transition-colors duration-300",
+                      "aspect-square rounded-[1rem] flex items-center justify-center relative transition-all duration-300",
                       fontClass,
-                      "font-bold shadow-sm border",
+                      "font-bold tracking-tight select-none",
                       isMarked
-                        ? "bg-gradient-to-br from-emerald-400 to-teal-600 text-white border-emerald-500 shadow-emerald-200/50 shadow-lg scale-[0.98]"
-                        : "bg-white text-slate-700 border-slate-200 hover:border-emerald-200",
-                      isClickable && "cursor-pointer hover:shadow-md hover:bg-emerald-50/50",
-                      !isMyBoard && "cursor-default opacity-90",
-                      !isClickable && isMyBoard && !isMarked && "cursor-not-allowed opacity-60 bg-slate-50"
+                        ? "bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-lg shadow-emerald-200/40 ring-2 ring-white ring-offset-2 ring-offset-emerald-100/50"
+                        : "bg-white text-slate-700 shadow-sm border border-slate-100 hover:border-emerald-200",
+                      isClickable && "cursor-pointer",
+                      !isMyBoard && "opacity-80 grayscale-[0.2]",
+                      !isClickable && isMyBoard && !isMarked && "opacity-60 cursor-not-allowed bg-slate-50 text-slate-400"
                     )}
                   >
-                    {/* Background pattern for texture */}
+                    <span className="relative z-10">{number}</span>
+
+                    {/* Checkmark overlay - softer */}
                     {isMarked && (
                       <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 0.1 }}
-                        className="absolute inset-0 bg-[radial-gradient(#00000020_1px,transparent_1px)] [background-size:16px_16px]"
-                      />
-                    )}
-
-                    <span className="relative z-10 drop-shadow-sm">{number}</span>
-
-                    {/* Selection indicator for current turn */}
-                    {isClickable && (
-                      <motion.div
-                        className="absolute inset-0 rounded-xl ring-2 ring-emerald-400 ring-offset-2 ring-offset-white opacity-0"
-                        whileHover={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                      />
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 0.2, scale: 1.2 }}
+                        className="absolute inset-0 flex items-center justify-center"
+                      >
+                        <div className="w-3/4 h-3/4 bg-white/30 rounded-full blur-md" />
+                      </motion.div>
                     )}
                   </motion.button>
                 )
               })}
             </AnimatePresence>
           </div>
+        </div>
 
-          {/* Dynamic Status Bar */}
-          <div className="mt-6">
-            <AnimatePresence mode="wait">
-              {isMyTurn && gameStatus === "playing" ? (
-                <motion.div
-                  key="my-turn"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-gradient-to-r from-emerald-500 to-teal-600 p-4 rounded-xl shadow-lg relative overflow-hidden"
-                >
-                  <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/10 rounded-full blur-xl animate-pulse" />
-                  <p className="text-white font-bold text-center flex items-center justify-center gap-2 text-sm sm:text-base">
-                    <span className="animate-bounce">👉</span> It's your turn! Pick a number
-                    {timeLeft > 0 && (
-                      <span className="block text-xs font-normal opacity-90 mt-1">
-                        Time remaining: {timeLeft}s
-                      </span>
-                    )}
-                  </p>
-                </motion.div>
-              ) : !isMyTurn && gameStatus === "playing" ? (
-                <motion.div
-                  key="waiting"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-slate-100 p-4 rounded-xl border border-slate-200"
-                >
-                  <p className="text-slate-500 text-center font-medium flex items-center justify-center gap-2 text-sm sm:text-base">
-                    <span className="animate-spin text-xl">⏳</span> Waiting for opponent...
-                    {timeLeft > 0 && (
-                      <span className="block text-xs font-normal text-slate-400 mt-1">
-                        Auto-pass in: {timeLeft}s
-                      </span>
-                    )}
-                  </p>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Footer Status Message - Integrated */}
+        <div className="bg-slate-50/50 border-t border-slate-100/80 p-3 flex justify-center min-h-[3.5rem] items-center">
+          <AnimatePresence mode="wait">
+            {isMyTurn && gameStatus === "playing" ? (
+              <motion.div
+                key="my-turn"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2 text-xs font-bold text-emerald-600 bg-emerald-50/80 px-4 py-1.5 rounded-full"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Tap a number to mark
+              </motion.div>
+            ) : !isMyTurn && gameStatus === "playing" ? (
+              <motion.div
+                key="waiting"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="text-xs font-medium text-slate-400 flex items-center gap-2"
+              >
+                Waiting for opponent...
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
+      </div>
     </motion.div>
   )
 }
+

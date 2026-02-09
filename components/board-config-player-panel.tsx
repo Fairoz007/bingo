@@ -1,6 +1,6 @@
 "use client"
 
-import { Users, CheckCircle2, Clock } from "lucide-react"
+import { Users, CheckCircle2, Clock, Globe } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
@@ -27,64 +27,68 @@ export function BoardConfigPlayerPanel({
   const playersStillConfiguring = Math.max(maxPlayers - playersReady, 0)
 
   return (
-    <Card className="bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200 p-4 sm:p-6">
-      <div className="space-y-4">
+    <Card className="bg-white/80 backdrop-blur-xl border-white/50 shadow-lg p-6 rounded-[24px] ring-1 ring-black/5">
+      <div className="space-y-6">
         {/* Player Status */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-600 text-white p-2 rounded-lg">
+            <div className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white p-2.5 rounded-xl shadow-md">
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">You are playing as</p>
-              <p className="text-lg font-bold text-emerald-900">{playerName}</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">You are</p>
+              <p className="text-lg font-bold text-slate-800">{playerName}</p>
             </div>
           </div>
-          <Badge className="bg-emerald-600 text-white">Player {playerNumber}</Badge>
+          <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200 px-3 py-1 rounded-lg">
+            P{playerNumber}
+          </Badge>
         </div>
 
         {/* Player Count */}
-        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-emerald-200">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            <div>
-              <p className="text-xs text-muted-foreground">Players Joined</p>
-              <p className="text-lg font-bold text-emerald-900">
-                {playerCount}/{maxPlayers}
-              </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1 bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-2 text-slate-500 mb-1">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium uppercase">Joined</span>
             </div>
+            <p className="text-2xl font-black text-slate-700">
+              {playerCount}<span className="text-slate-300 text-lg">/</span>{maxPlayers}
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-600" />
-            <div>
-              <p className="text-xs text-muted-foreground">Players Ready</p>
-              <p className="text-lg font-bold text-emerald-900">
-                {playersReady}/{maxPlayers}
-              </p>
-              <p className="text-[11px] text-muted-foreground">{playersStillConfiguring} still configuring</p>
+
+          <div className="space-y-1 bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+            <div className="flex items-center gap-2 text-slate-500 mb-1">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium uppercase">Ready</span>
             </div>
+            <div className="flex items-baseline gap-1">
+              <p className="text-2xl font-black text-slate-700">
+                {playersReady}<span className="text-slate-300 text-lg">/</span>{maxPlayers}
+              </p>
+            </div>
+            {playersStillConfiguring > 0 && (
+              <p className="text-[10px] text-amber-600 font-medium">Waiting for {playersStillConfiguring}...</p>
+            )}
           </div>
         </div>
 
         {/* Game Settings */}
-        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-emerald-200 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Grid Size</p>
-            <p className="font-bold text-emerald-900">
-              {gridSize}×{gridSize}
-            </p>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center items-center text-center">
+            <span className="text-xs text-slate-400 font-bold uppercase mb-1">Grid Size</span>
+            <span className="text-lg font-bold text-slate-700">{gridSize} × {gridSize}</span>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Numbers</p>
-            <p className="font-bold text-emerald-900">1-{totalNumbers}</p>
+          <div className="bg-white p-3 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center items-center text-center">
+            <span className="text-xs text-slate-400 font-bold uppercase mb-1">Numbers</span>
+            <span className="text-lg font-bold text-slate-700">1 - {totalNumbers}</span>
           </div>
         </div>
 
         {/* Instructions */}
-        <div className="bg-white/60 rounded-lg p-3 border border-emerald-200">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Once all players join and configure their boards, the game will begin. Fill your board and click "Ready" when
-            done.
+        <div className="bg-emerald-50/80 rounded-xl p-4 border border-emerald-100/50 text-emerald-800 text-sm leading-relaxed">
+          <p>
+            <strong>Waiting for players...</strong> Once everyone configures their board, the game will start automatically!
           </p>
         </div>
       </div>

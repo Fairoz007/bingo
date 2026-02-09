@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { AvatarCarousel } from "@/components/avatar-carousel"
 import { PlayerCountSelector } from "@/components/player-count-selector"
-import { Users, LogIn, AlertCircle } from "lucide-react"
+import { Users, LogIn, AlertCircle, Sparkles } from "lucide-react"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { cn } from "@/lib/utils"
 
 const DEFAULT_AVATAR = "🎮"
 
@@ -93,21 +94,32 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 p-4">
-      <Card className="w-full max-w-2xl shadow-xl border-0 animate-in fade-in slide-up duration-500">
-        <CardHeader className="text-center space-y-2 pb-8 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-t-lg border-b border-emerald-100">
-          <CardTitle className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-            Bingo Game
+    <div className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-emerald-50/50 via-white to-teal-50/50 font-sans">
+      <Card className="w-full max-w-lg shadow-xl border-white/50 ring-1 ring-black/5 bg-white/90 backdrop-blur-xl rounded-[2rem] overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-500 mb-[5vh]">
+        <CardHeader className="text-center space-y-1 pt-8 pb-2 px-6 relative overflow-hidden">
+          {/* Subtle background glow for header */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-emerald-100/40 blur-3xl -z-10 rounded-full" />
+
+          <CardTitle className="text-4xl font-black tracking-tight text-slate-800 flex items-center justify-center gap-2">
+            Bingo
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">Game</span>
           </CardTitle>
-          <CardDescription className="text-base text-slate-600">
-            Create or join a multiplayer room and play with friends
+          <CardDescription className="text-sm text-slate-500 font-medium tracking-wide uppercase">
+            Multiplayer &bull; Instant &bull; Fun
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-8 pt-8">
-          <div className="space-y-6 pb-6 border-b border-slate-200">
-            <div className="space-y-2">
-              <Label htmlFor="playerName" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+        <CardContent className="space-y-6 px-6 pb-8">
+          {/* Avatar & Name Section */}
+          <div className="space-y-5">
+            <div className="flex justify-center -my-2">
+              <div className="scale-90 sm:scale-100 origin-center">
+                <AvatarCarousel value={playerAvatar} onChange={setPlayerAvatar} />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="playerName" className="sr-only">
                 Your Name
               </Label>
               <Input
@@ -115,76 +127,81 @@ export default function HomePage() {
                 placeholder="Enter your name"
                 value={playerName}
                 onChange={(e) => handleNameChange(e.target.value)}
-                className="h-12 text-base border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 transition-all"
+                className="h-12 sm:h-14 text-center font-bold text-slate-700 bg-slate-50/50 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all placeholder:text-slate-400"
                 maxLength={30}
               />
               {nameError && (
-                <div className="flex items-start gap-2 text-sm text-red-600 animate-in fade-in">
-                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div className="flex items-center justify-center gap-2 text-xs text-red-500 font-medium animate-in fade-in">
+                  <AlertCircle className="h-3.5 w-3.5" />
                   <span>{nameError}</span>
                 </div>
               )}
             </div>
-
-            <AvatarCarousel value={playerAvatar} onChange={setPlayerAvatar} />
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-800 mb-4">Create New Room</h3>
-              <PlayerCountSelector value={maxPlayers} onChange={setMaxPlayers} />
+          {/* Create Room Section */}
+          <div className="space-y-3 pt-2">
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 gap-3">
+                <PlayerCountSelector value={maxPlayers} onChange={setMaxPlayers} />
+
+                <Button
+                  onClick={handleCreateRoom}
+                  disabled={!isNameValid || isCreating}
+                  className="w-full h-12 sm:h-14 text-base font-bold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.01] active:scale-[0.98] rounded-xl border-none disabled:opacity-70 disabled:hover:scale-100"
+                >
+                  {isCreating ? (
+                    <span className="animate-spin mr-2">⏳</span>
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  {isCreating ? "Creating Room..." : "Create New Room"}
+                </Button>
+              </div>
             </div>
 
-            <Button
-              onClick={handleCreateRoom}
-              disabled={!isNameValid || isCreating}
-              className="w-full h-12 text-base font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              size="lg"
-            >
-              <Users className="mr-2 h-5 w-5" />
-              {isCreating ? "Creating Room..." : "Create New Room"}
-            </Button>
-          </div>
-
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 text-slate-500 font-semibold tracking-wide">Or Join Existing</span>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="roomCode" className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-                Room Code
-              </Label>
-              <Input
-                id="roomCode"
-                placeholder="Enter 6-digit code"
-                value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                maxLength={6}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && roomCode.trim() && isNameValid) {
-                    handleJoinRoom()
-                  }
-                }}
-                className="h-12 text-lg tracking-widest font-mono border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 transition-all text-center font-bold"
-              />
+            {/* Divider */}
+            <div className="relative py-3">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-slate-100" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-white px-2 text-slate-300 font-bold tracking-widest">OR</span>
+              </div>
             </div>
 
-            <Button
-              onClick={handleJoinRoom}
-              disabled={!isNameValid || !roomCode.trim() || isJoining}
-              variant="outline"
-              className="w-full h-12 text-base font-semibold border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
-              size="lg"
-            >
-              <LogIn className="mr-2 h-5 w-5" />
-              {isJoining ? "Joining Room..." : "Join Room"}
-            </Button>
+            {/* Join Room Section */}
+            <div className="space-y-3">
+              <div className="relative group">
+                <Input
+                  id="roomCode"
+                  placeholder="ENTER CODE"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                  maxLength={6}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && roomCode.trim() && isNameValid) {
+                      handleJoinRoom()
+                    }
+                  }}
+                  className="h-12 sm:h-14 text-lg tracking-widest font-black text-center text-slate-800 bg-slate-50/50 border-slate-200 shadow-sm rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all placeholder:text-slate-300 placeholder:tracking-normal placeholder:font-bold"
+                />
+              </div>
+
+              <Button
+                onClick={handleJoinRoom}
+                disabled={!isNameValid || !roomCode.trim() || isJoining}
+                variant="ghost"
+                className="w-full h-12 text-sm font-semibold text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all rounded-lg"
+              >
+                {isJoining ? (
+                  <span className="animate-spin mr-2">⏳</span>
+                ) : (
+                  <LogIn className="mr-2 h-4 w-4" />
+                )}
+                {isJoining ? "Joining..." : "Join Existing Room"}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
